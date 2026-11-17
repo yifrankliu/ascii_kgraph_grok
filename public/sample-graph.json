@@ -1,133 +1,139 @@
 {
+  "title": "sample",
+  "rootId": "sample",
   "nodes": [
-    { "id": "cognition", "label": "cognition", "kind": "folder" },
-    { "id": "linear", "label": "linear", "kind": "folder" },
-    { "id": "history", "label": "history", "kind": "folder" },
+    { "id": "sample", "label": "sample", "kind": "folder" },
+    { "id": "sample/cognition", "label": "cognition", "kind": "folder", "parent": "sample" },
+    { "id": "sample/linear", "label": "linear", "kind": "folder", "parent": "sample" },
+    { "id": "sample/history", "label": "history", "kind": "folder", "parent": "sample" },
     {
-      "id": "cognition/attention.md",
+      "id": "sample/cognition/attention.md",
       "label": "attention.md",
       "kind": "file",
-      "parent": "cognition",
+      "parent": "sample/cognition",
       "summary": "Notes on selective attention and how limited capacity shapes what a student remembers.",
       "concepts": ["selective attention", "working memory", "cognitive load"],
       "status": "ready"
     },
     {
-      "id": "cognition/memory.md",
+      "id": "sample/cognition/memory.md",
       "label": "memory.md",
       "kind": "file",
-      "parent": "cognition",
+      "parent": "sample/cognition",
       "summary": "Covers encoding, consolidation, and retrieval as the path from study to recall.",
       "concepts": ["encoding", "consolidation", "retrieval"],
       "status": "ready"
     },
     {
-      "id": "cognition/sleep.md",
+      "id": "sample/cognition/sleep.md",
       "label": "sleep.md",
       "kind": "file",
-      "parent": "cognition",
+      "parent": "sample/cognition",
       "summary": "Describes how sleep stages support memory consolidation after learning.",
       "concepts": ["slow-wave sleep", "memory consolidation", "circadian rhythm"],
       "status": "ready"
     },
     {
-      "id": "linear/spaces.md",
+      "id": "sample/linear/spaces.md",
       "label": "spaces.md",
       "kind": "file",
-      "parent": "linear",
+      "parent": "sample/linear",
       "summary": "Introduces vector spaces, bases, and dimension as the setting for later linear algebra.",
       "concepts": ["vector space", "basis", "dimension"],
       "status": "ready"
     },
     {
-      "id": "linear/eigen.md",
+      "id": "sample/linear/eigen.md",
       "label": "eigen.md",
       "kind": "file",
-      "parent": "linear",
+      "parent": "sample/linear",
       "summary": "Works through eigenvalues and eigenvectors as directions a linear map only scales.",
       "concepts": ["eigenvalue", "eigenvector", "characteristic polynomial"],
       "status": "ready"
     },
     {
-      "id": "linear/least-squares.md",
+      "id": "sample/linear/least-squares.md",
       "label": "least-squares.md",
       "kind": "file",
-      "parent": "linear",
+      "parent": "sample/linear",
       "summary": "Shows least squares as the projection of data onto a column space.",
       "concepts": ["least squares", "projection", "normal equations"],
       "status": "ready"
     },
     {
-      "id": "history/networks.md",
+      "id": "sample/history/networks.md",
       "label": "networks.md",
       "kind": "file",
-      "parent": "history",
+      "parent": "sample/history",
       "summary": "Traces how correspondence networks spread ideas among early modern scholars.",
       "concepts": ["correspondence networks", "republic of letters", "knowledge circulation"],
       "status": "ready"
     },
     {
-      "id": "history/print.md",
+      "id": "sample/history/print.md",
       "label": "print.md",
       "kind": "file",
-      "parent": "history",
+      "parent": "sample/history",
       "summary": "Connects the printing press to wider access to texts and faster scholarly argument.",
       "concepts": ["printing press", "textual transmission", "public knowledge"],
       "status": "ready"
     },
     {
-      "id": "history/yale.md",
+      "id": "sample/history/yale.md",
       "label": "yale.md",
       "kind": "file",
-      "parent": "history",
+      "parent": "sample/history",
       "summary": "Sketches how a campus collects courses, libraries, and people into one knowledge community.",
       "concepts": ["Yale", "libraries", "course of study"],
       "status": "ready"
     }
   ],
   "edges": [
-    { "source": "cognition", "target": "cognition/attention.md", "kind": "contains" },
-    { "source": "cognition", "target": "cognition/memory.md", "kind": "contains" },
-    { "source": "cognition", "target": "cognition/sleep.md", "kind": "contains" },
-    { "source": "linear", "target": "linear/spaces.md", "kind": "contains" },
-    { "source": "linear", "target": "linear/eigen.md", "kind": "contains" },
-    { "source": "linear", "target": "linear/least-squares.md", "kind": "contains" },
-    { "source": "history", "target": "history/networks.md", "kind": "contains" },
-    { "source": "history", "target": "history/print.md", "kind": "contains" },
-    { "source": "history", "target": "history/yale.md", "kind": "contains" },
+    { "source": "sample", "target": "sample/cognition", "kind": "contains" },
+    { "source": "sample", "target": "sample/linear", "kind": "contains" },
+    { "source": "sample", "target": "sample/history", "kind": "contains" },
+    { "source": "sample/cognition", "target": "sample/cognition/attention.md", "kind": "contains" },
+    { "source": "sample/cognition", "target": "sample/cognition/memory.md", "kind": "contains" },
+    { "source": "sample/cognition", "target": "sample/cognition/sleep.md", "kind": "contains" },
+    { "source": "sample/linear", "target": "sample/linear/spaces.md", "kind": "contains" },
+    { "source": "sample/linear", "target": "sample/linear/eigen.md", "kind": "contains" },
+    { "source": "sample/linear", "target": "sample/linear/least-squares.md", "kind": "contains" },
+    { "source": "sample/history", "target": "sample/history/networks.md", "kind": "contains" },
+    { "source": "sample/history", "target": "sample/history/print.md", "kind": "contains" },
+    { "source": "sample/history", "target": "sample/history/yale.md", "kind": "contains" },
     {
-      "source": "cognition/attention.md",
-      "target": "cognition/memory.md",
+      "source": "sample/cognition/attention.md",
+      "target": "sample/cognition/memory.md",
       "kind": "relates",
       "note": "Attention gates what gets encoded"
     },
     {
-      "source": "cognition/memory.md",
-      "target": "cognition/sleep.md",
+      "source": "sample/cognition/memory.md",
+      "target": "sample/cognition/sleep.md",
       "kind": "relates",
       "note": "Sleep consolidates what was encoded"
     },
     {
-      "source": "linear/eigen.md",
-      "target": "linear/spaces.md",
+      "source": "sample/linear/eigen.md",
+      "target": "sample/linear/spaces.md",
       "kind": "relates",
       "note": "Eigenvectors live in a vector space"
     },
     {
-      "source": "linear/spaces.md",
-      "target": "linear/least-squares.md",
+      "source": "sample/linear/spaces.md",
+      "target": "sample/linear/least-squares.md",
       "kind": "relates",
       "note": "Least squares projects onto a subspace"
     },
     {
-      "source": "cognition/attention.md",
-      "target": "history/networks.md",
+      "source": "sample/cognition/attention.md",
+      "target": "sample/history/networks.md",
       "kind": "relates",
       "note": "Both ask what information gets through"
     },
     {
-      "source": "history/print.md",
-      "target": "history/yale.md",
+      "source": "sample/history/print.md",
+      "target": "sample/history/yale.md",
       "kind": "relates",
       "note": "Print scaled the texts a campus holds"
     }
