@@ -198,9 +198,9 @@ function ensureStyle(): void {
       background: #000;
       color: #f4f4f0;
       font: 14px/1.15 ui-monospace, "Cascadia Code", Consolas, monospace;
-      letter-spacing: 0.02em;
+      letter-spacing: 0;
     }
-    .trace-probe { font: 14px/1.15 ui-monospace, "Cascadia Code", Consolas, monospace; position: absolute; visibility: hidden; }
+    .trace-probe { font: 14px/1.15 ui-monospace, "Cascadia Code", Consolas, monospace; letter-spacing: 0; position: absolute; visibility: hidden; }
     .trace-stage .c0 { color: #5a5a54 }
     .trace-stage .c1 { color: #a8a8a0 }
     .trace-stage .c2 { color: #e8e8e0; text-shadow: 0 0 4px rgba(255,255,255,.2) }

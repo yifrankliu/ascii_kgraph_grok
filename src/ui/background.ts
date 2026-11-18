@@ -4,7 +4,7 @@ import { createMatrix } from "./bg-matrix";
 const PRESETS = ["dark", "koi", "matrix"] as const;
 const STORAGE_KEY = "kgraph.background";
 
-type BackgroundPreset = (typeof PRESETS)[number];
+export type BackgroundPreset = (typeof PRESETS)[number];
 
 interface Mask {
   c0: number;
@@ -20,7 +20,11 @@ interface CellGrid {
   plot(col: number, row: number, ch: string, color: string): void;
 }
 
-export function mountBackground(): { setPreset(name: BackgroundPreset): void; destroy(): void } {
+export function mountBackground(opts?: { onUserPick?: (name: BackgroundPreset) => void }): {
+  setPreset(name: BackgroundPreset, persist?: boolean): void;
+  current(): BackgroundPreset;
+  destroy(): void;
+} {
   ensureStyle();
   const host = document.createElement("pre");
   host.id = "backdrop";
@@ -42,8 +46,10 @@ export function mountBackground(): { setPreset(name: BackgroundPreset): void; de
 
   function resize(): void {
     cell = measure(host);
-    const cols = clamp(Math.floor(window.innerWidth / cell.w), 24, 220);
-    const rows = clamp(Math.floor(window.innerHeight / cell.h), 12, 90);
+    // ceil + padding so the glyph grid always overshoots the right/bottom edge
+    // instead of leaving a blank strip when floor() truncates.
+    const cols = clamp(Math.ceil(window.innerWidth / cell.w) + 2, 24, 400);
+    const rows = clamp(Math.ceil(window.innerHeight / cell.h) + 2, 12, 160);
     grid.resize(cols, rows, cell.h / cell.w);
     koi.resize(cols, rows);
     matrix.resize(cols, rows);
@@ -61,9 +67,15 @@ export function mountBackground(): { setPreset(name: BackgroundPreset): void; de
     }
     shown = preset;
     grid.clear();
-    grid.hold(graphBox(cell));
-    if (preset === "koi") koi.draw(grid, dt);
-    else matrix.draw(grid, dt);
+    if (preset === "koi") {
+      grid.hold(graphBox(cell));
+      grid.cover(null);
+      koi.draw(grid, dt);
+    } else {
+      grid.hold(null);
+      grid.cover(graphSolids(cell, grid.cols, grid.rows));
+      matrix.draw(grid, dt);
+    }
     host.innerHTML = grid.html();
   }
 
@@ -76,12 +88,15 @@ export function mountBackground(): { setPreset(name: BackgroundPreset): void; de
     paint(dt);
   }
 
-  function setPreset(name: BackgroundPreset): void {
+  function setPreset(name: BackgroundPreset, persist = true): void {
     preset = name;
-    try {
-      localStorage.setItem(STORAGE_KEY, name);
-    } catch {
-      /* storage unavailable */
+    if (persist) {
+      try {
+        localStorage.setItem(STORAGE_KEY, name);
+      } catch {
+        /* storage unavailable */
+      }
+      opts?.onUserPick?.(name);
     }
     for (const button of buttons) {
       button.setAttribute("aria-pressed", button.dataset.preset === name ? "true" : "false");
@@ -110,6 +125,9 @@ export function mountBackground(): { setPreset(name: BackgroundPreset): void; de
 
   return {
     setPreset,
+    current() {
+      return preset;
+    },
     destroy() {
       alive = false;
       cancelAnimationFrame(raf);
@@ -124,6 +142,9 @@ function createGrid(): CellGrid & {
   resize(cols: number, rows: number, aspect: number): void;
   clear(): void;
   hold(next: Mask | null): void;
+  cover(bits: Uint8Array | null): void;
+  roof(col: number): number;
+  blocked(col: number, row: number): boolean;
   box(): Mask | null;
   html(): string;
 } {
@@ -131,6 +152,8 @@ function createGrid(): CellGrid & {
   let rows = 0;
   let aspect = 1.7;
   let mask: Mask | null = null;
+  let solids: Uint8Array | null = null;
+  let roofs = new Int16Array(0);
   let chars: string[] = [];
   let colors: string[] = [];
 
@@ -158,6 +181,29 @@ function createGrid(): CellGrid & {
     hold(next) {
       mask = next;
     },
+    cover(bits) {
+      solids = bits;
+      if (roofs.length !== cols) roofs = new Int16Array(cols);
+      roofs.fill(-1);
+      if (!bits) return;
+      for (let r = 0; r < rows; r++) {
+        const start = r * cols;
+        for (let c = 0; c < cols; c++) {
+          if (bits[start + c] === 1 && roofs[c] === -1) roofs[c] = r;
+        }
+      }
+    },
+    roof(col) {
+      const c = Math.round(col);
+      if (c < 0 || c >= roofs.length) return -1;
+      return roofs[c] ?? -1;
+    },
+    blocked(col, row) {
+      const c = Math.round(col);
+      const r = Math.round(row);
+      if (!solids || c < 0 || r < 0 || c >= cols || r >= rows) return false;
+      return solids[r * cols + c] === 1;
+    },
     box() {
       return mask;
     },
@@ -167,6 +213,7 @@ function createGrid(): CellGrid & {
       if (c < 0 || r < 0 || c >= cols || r >= rows) return;
       if (mask && c >= mask.c0 && c <= mask.c1 && r >= mask.r0 && r <= mask.r1) return;
       const index = r * cols + c;
+      if (solids && solids[index] === 1) return;
       chars[index] = ch;
       colors[index] = color;
     },
@@ -226,6 +273,39 @@ function graphBox(cell: { w: number; h: number }): Mask | null {
     c1: Math.ceil(right / cell.w) + pad,
     r1: Math.ceil(bottom / cell.h) + pad,
   };
+}
+
+function graphSolids(cell: { w: number; h: number }, cols: number, rows: number): Uint8Array | null {
+  const stage = document.querySelector("#stage");
+  if (!(stage instanceof HTMLElement) || cell.w <= 0 || cell.h <= 0 || cols <= 0 || rows <= 0) return null;
+  const glyph = stageCell(stage);
+  if (!glyph) return null;
+  const lines = (stage.textContent ?? "").split("\n");
+  const solids = new Uint8Array(cols * rows);
+  let any = false;
+  for (let r = 0; r < lines.length; r++) {
+    const line = lines[r] ?? "";
+    const top = glyph.y + r * glyph.h;
+    const bottom = top + glyph.h;
+    const r0 = Math.max(0, Math.floor(top / cell.h));
+    const r1 = Math.min(rows - 1, Math.ceil(bottom / cell.h) - 1);
+    if (r1 < r0) continue;
+    for (let c = 0; c < line.length; c++) {
+      if (line[c] === " ") continue;
+      const left = glyph.x + c * glyph.w;
+      const right = left + glyph.w;
+      const c0 = Math.max(0, Math.floor(left / cell.w));
+      const c1 = Math.min(cols - 1, Math.ceil(right / cell.w) - 1);
+      for (let br = r0; br <= r1; br++) {
+        const row = br * cols;
+        for (let bc = c0; bc <= c1; bc++) {
+          solids[row + bc] = 1;
+          any = true;
+        }
+      }
+    }
+  }
+  return any ? solids : null;
 }
 
 function stageCell(stage: HTMLElement): { x: number; y: number; w: number; h: number } | null {
@@ -305,17 +385,26 @@ function ensureStyle(): void {
     body { isolation: isolate; }
     #backdrop {
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
       z-index: 0;
       margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      min-width: 100%;
+      min-height: 100%;
+      box-sizing: border-box;
       pointer-events: none;
       background: #000;
       color: #000;
       font: 12px/1 ui-monospace, Consolas, monospace;
+      letter-spacing: 0;
       overflow: hidden;
       user-select: none;
+      white-space: pre;
     }
-    #backdrop .bg-probe { position: absolute; visibility: hidden; font: inherit; }
+    #backdrop .bg-probe { position: absolute; visibility: hidden; font: inherit; letter-spacing: inherit; }
     body > header,
     body > #stage { position: relative; z-index: 1; }
     body > header { text-shadow: 0 0 3px #000; }

@@ -159,12 +159,11 @@ function project(x: number, y: number, z: number, cols: number, rows: number, ya
   const z2 = -x * Math.sin(yaw) + z1 * Math.cos(yaw);
   const camera = 2.85 - z2;
   const persp = 2.2 / camera;
-  // Use most of the stage so wide viewports aren't empty on the sides.
-  const spanX = cols * 0.46;
-  const spanY = rows * 0.42;
+  // One shared span so ultrawide windows don't squash the cone into a flat oval.
+  const span = Math.min(cols * 0.4, rows * 0.78);
   return {
-    col: (cols - 1) / 2 + x2 * persp * spanX,
-    row: (rows - 1) / 2 - y1 * persp * spanY + 1,
+    col: (cols - 1) / 2 + x2 * persp * span,
+    row: (rows - 1) / 2 - y1 * persp * span * 0.55 + 1,
     depth: camera,
     near: clamp((z2 + 1) / 2, 0, 1),
   };
