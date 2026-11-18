@@ -70,27 +70,32 @@ export async function POST(request: Request): Promise<Response> {
       .join("\n");
 
     const input = [{ role: "user" as const, content: [{ type: "input_text" as const, text: prompt }] }];
-    let response;
+    const createArgs = {
+      model: client.model,
+      reasoning: { effort: "low" as const },
+      input,
+    };
+    let response: { output_text?: string; citations?: unknown };
     try {
-      response = await client.openai.responses.create({
-        model: client.model,
-        reasoning: { effort: "low" },
+      response = (await client.openai.responses.create({
+        ...createArgs,
         tools: [{ type: "web_search" }],
-        input,
-      } as Parameters<typeof client.openai.responses.create>[0]);
+      } as Parameters<typeof client.openai.responses.create>[0])) as {
+        output_text?: string;
+        citations?: unknown;
+      };
     } catch {
-      response = await client.openai.responses.create({
-        model: client.model,
-        reasoning: { effort: "low" },
-        input,
-      });
+      response = (await client.openai.responses.create(createArgs)) as {
+        output_text?: string;
+        citations?: unknown;
+      };
     }
 
     const reply = String(response.output_text ?? "").trim();
     if (!reply) return Response.json({ error: "Grok returned an empty reply." }, { status: 502 });
     return Response.json({
       reply,
-      citations: collectCitations(response as unknown as { citations?: unknown }),
+      citations: collectCitations(response),
     });
   } catch (error) {
     const detail = error instanceof Error ? error.message : "Grok request failed.";
