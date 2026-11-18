@@ -75,8 +75,8 @@ export function createRenderer(
     probe.remove();
     cellW = rect.width || 8;
     cellH = rect.height || 16;
-    cols = clamp(Math.floor(mount.clientWidth / cellW), 24, 160);
-    rows = clamp(Math.floor(mount.clientHeight / cellH), 12, 70);
+    cols = clamp(Math.floor(mount.clientWidth / cellW), 24, 220);
+    rows = clamp(Math.floor(mount.clientHeight / cellH), 12, 90);
   };
 
   const frame = (now: number) => {

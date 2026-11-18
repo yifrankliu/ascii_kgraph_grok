@@ -327,6 +327,7 @@ function ensureStyle(): void {
     #panel { z-index: 2; }
     #friends-panel { z-index: 3; }
     #stage.trace-stage {
+      width: 100%;
       background: transparent;
       text-shadow: 0 0 3px rgba(0, 0, 0, 0.85);
     }
