@@ -1,4 +1,3 @@
-import type OpenAI from "openai";
 import { grokClient } from "./grok";
 
 export const maxDuration = 60;
@@ -29,67 +28,73 @@ const SYSTEM = [
   "You are grokbot, the study assistant inside kgraph — an ASCII knowledge graph of a Yale student's notes.",
   "Help them recall what they have learned, summarize specific notes, give short refreshers on topics in their graph, and suggest what to study or which Yale course to take next.",
   "Ground answers in the knowledge-base JSON when it is relevant. If a note is thin or missing, say so.",
-  "When the user asks about Yale courses, catalogs, prerequisites, or what to take next, use web_search and prefer current pages on catalog.yale.edu, courses.yale.edu, ocs.yale.edu, registrar.yale.edu, and yale.edu. Cite course codes and source URLs when you find them.",
+  "When the user asks about Yale courses, catalogs, prerequisites, or what to take next, search current pages on catalog.yale.edu, courses.yale.edu, ocs.yale.edu, registrar.yale.edu, and yale.edu. Cite course codes and source URLs when you find them.",
   "Keep replies concise and plain text (no markdown tables). Use short paragraphs or bullet lines with '- '.",
   "Tone: helpful, direct, a little dry — matching a terminal UI.",
 ].join(" ");
 
 export async function POST(request: Request): Promise<Response> {
-  const client = grokClient();
-  if (client instanceof Response) return client;
-
-  const body = (await request.json()) as ChatBody;
-  const message = typeof body.message === "string" ? body.message.trim() : "";
-  if (!message) return Response.json({ error: "Expected a message." }, { status: 400 });
-
-  const history = (body.history ?? [])
-    .filter(
-      (turn): turn is ChatTurn =>
-        !!turn &&
-        (turn.role === "user" || turn.role === "assistant") &&
-        typeof turn.content === "string" &&
-        turn.content.trim().length > 0,
-    )
-    .slice(-8);
-
-  const knowledge = serializeKnowledge(body.knowledge);
-  const input: OpenAI.Responses.ResponseInput = [
-    { role: "system", content: SYSTEM },
-    {
-      role: "user",
-      content: [
-        {
-          type: "input_text",
-          text: [
-            "Student knowledge base (JSON). Use this for what they have learned:",
-            knowledge,
-          ].join("\n\n"),
-        },
-      ],
-    },
-    ...history.map((turn) => ({
-      role: turn.role,
-      content: turn.content,
-    })),
-    { role: "user", content: message },
-  ];
-
   try {
-    const response = await client.openai.responses.create({
-      model: client.model,
-      reasoning: { effort: "low" },
-      tools: [{ type: "web_search" } as OpenAI.Responses.Tool],
-      input,
-    });
+    const client = grokClient();
+    if (client instanceof Response) return client;
 
-    const reply = (response.output_text ?? "").trim();
+    const body = (await request.json()) as ChatBody;
+    const message = typeof body.message === "string" ? body.message.trim() : "";
+    if (!message) return Response.json({ error: "Expected a message." }, { status: 400 });
+
+    const history = (body.history ?? [])
+      .filter(
+        (turn): turn is ChatTurn =>
+          !!turn &&
+          (turn.role === "user" || turn.role === "assistant") &&
+          typeof turn.content === "string" &&
+          turn.content.trim().length > 0,
+      )
+      .slice(-8);
+
+    const transcript = history
+      .map((turn) => `${turn.role === "user" ? "Student" : "Grokbot"}: ${turn.content.trim()}`)
+      .join("\n");
+
+    const prompt = [
+      SYSTEM,
+      "",
+      "Student knowledge base (JSON):",
+      serializeKnowledge(body.knowledge),
+      transcript ? `\nRecent chat:\n${transcript}` : "",
+      "",
+      `Student: ${message}`,
+      "Grokbot:",
+    ]
+      .filter((line) => line !== "")
+      .join("\n");
+
+    const input = [{ role: "user" as const, content: [{ type: "input_text" as const, text: prompt }] }];
+    let response;
+    try {
+      response = await client.openai.responses.create({
+        model: client.model,
+        reasoning: { effort: "low" },
+        tools: [{ type: "web_search" }],
+        input,
+      } as Parameters<typeof client.openai.responses.create>[0]);
+    } catch {
+      response = await client.openai.responses.create({
+        model: client.model,
+        reasoning: { effort: "low" },
+        input,
+      });
+    }
+
+    const reply = String(response.output_text ?? "").trim();
     if (!reply) return Response.json({ error: "Grok returned an empty reply." }, { status: 502 });
     return Response.json({
       reply,
       citations: collectCitations(response as unknown as { citations?: unknown }),
     });
-  } catch {
-    return Response.json({ error: "Grok request failed." }, { status: 502 });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "Grok request failed.";
+    return Response.json({ error: detail.slice(0, 240) }, { status: 502 });
   }
 }
 
@@ -120,7 +125,12 @@ function collectCitations(response: { citations?: unknown }): string[] {
   if (Array.isArray(response.citations)) {
     for (const item of response.citations) {
       if (typeof item === "string" && /^https?:\/\//i.test(item)) urls.add(item);
-      else if (item && typeof item === "object" && "url" in item && typeof (item as { url: unknown }).url === "string") {
+      else if (
+        item &&
+        typeof item === "object" &&
+        "url" in item &&
+        typeof (item as { url: unknown }).url === "string"
+      ) {
         urls.add((item as { url: string }).url);
       }
     }
