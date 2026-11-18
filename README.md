@@ -1,5 +1,7 @@
 # kgraph
 
+### Link: https://asciikgraphgrok.vercel.app/ ###
+
 Upload your academic consciousness. Share it with the people you study beside.
 
 A Yale semester is a pile of courses that only meet in your head. kgraph turns that pile into a living ASCII graph: every folder, every note, every idea that quietly connects them. You upload it. Friends can walk it. You can index the whole thing, ask grokbot for a refresher, and plan the next course from what you already know.
