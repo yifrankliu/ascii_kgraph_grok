@@ -6,6 +6,10 @@ Upload your academic consciousness. Share it with the people you study beside.
 
 A Yale semester is a pile of courses that only meet in your head. kgraph turns that pile into a living ASCII graph: every folder, every note, every idea that quietly connects them. You upload it. Friends can walk it. You can index the whole thing, ask grokbot for a refresher, and plan the next course from what you already know.
 
+## Demo
+
+https://github.com/user-attachments/assets/7a4dd187-d6ba-4ed9-8f3d-e5ef0902bc50
+
 ## Upload it
 
 Point kgraph at the notes you already keep. Drop a local folder, or choose one with **set different root directory**. A GoodNotes export, a course directory, PDFs, markdown, and text — the folder becomes the graph in front of you. Courses are branches. Each file gets a short summary. Lines appear where two notes are about the same idea, even when they lived in different classes.
