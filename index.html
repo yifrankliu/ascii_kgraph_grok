@@ -430,18 +430,51 @@
         display: none;
       }
       #grokbot-panel .dialogue {
+        --dialogue-height: 15rem;
         pointer-events: auto;
+        position: relative;
         display: grid;
         grid-template-columns: auto minmax(0, 1fr);
         gap: 0.85rem 1rem;
         align-items: stretch;
-        padding: 0.75rem 0.9rem 0.7rem;
+        height: var(--dialogue-height);
+        max-height: min(78vh, 40rem);
+        min-height: 12rem;
+        padding: 0.85rem 0.9rem 0.7rem;
         background: #000;
         border: 2px solid #fff;
         box-shadow:
           0 0 0 1px #000,
           0 0 0 3px #7eb8c9,
           0 12px 28px rgba(0, 0, 0, 0.55);
+      }
+      #grokbot-resize {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 0.7rem;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        cursor: ns-resize;
+        touch-action: none;
+      }
+      #grokbot-resize::before {
+        content: "";
+        position: absolute;
+        top: 0.28rem;
+        left: 50%;
+        width: 2.4rem;
+        height: 2px;
+        transform: translateX(-50%);
+        background: #7eb8c9;
+        opacity: 0.7;
+      }
+      #grokbot-resize:hover::before,
+      #grokbot-resize:focus-visible::before {
+        opacity: 1;
       }
       #grokbot-panel .dialogue-face {
         margin: 0;
@@ -455,11 +488,11 @@
       }
       #grokbot-panel .dialogue-main {
         min-width: 0;
+        min-height: 0;
+        height: 100%;
         display: flex;
         flex-direction: column;
         gap: 0.45rem;
-        min-height: 9.5rem;
-        max-height: min(38vh, 16rem);
       }
       #grokbot-panel .dialogue-head {
         display: flex;
@@ -641,6 +674,12 @@
     </aside>
     <aside id="grokbot-panel" hidden aria-label="grokbot dialogue">
       <div class="dialogue">
+        <button
+          id="grokbot-resize"
+          type="button"
+          aria-label="Drag up to enlarge dialogue"
+          title="drag up to enlarge"
+        ></button>
         <pre class="dialogue-face" aria-hidden="true"></pre>
         <div class="dialogue-main">
           <div class="dialogue-head">

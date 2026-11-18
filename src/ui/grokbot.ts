@@ -58,9 +58,13 @@ export function mountGrokbot(opts: {
   const form = required("#grokbot-form");
   const inputNode = required("#grokbot-input");
   const prompts = required("#grokbot-prompts");
+  const resize = required("#grokbot-resize");
+  const dialogueNode = panel.querySelector(".dialogue");
   if (!(inputNode instanceof HTMLInputElement)) throw new Error("Missing #grokbot-input");
   if (!(form instanceof HTMLFormElement)) throw new Error("Missing #grokbot-form");
+  if (!(dialogueNode instanceof HTMLElement)) throw new Error("Missing .dialogue");
   const input: HTMLInputElement = inputNode;
+  const dialogue: HTMLElement = dialogueNode;
 
   const toggleFace = toggle.querySelector(".grokbot-face");
   if (toggleFace) toggleFace.textContent = FACE_TINY;
@@ -69,7 +73,13 @@ export function mountGrokbot(opts: {
 
   let open = false;
   let busy = false;
+  let resizing = false;
   const history: Turn[] = [];
+  const minHeight = 192;
+  let boxHeight = Math.round(Math.min(window.innerHeight * 0.38, 256));
+  applyHeight(boxHeight);
+
+  bindResize(resize);
 
   prompts.replaceChildren(
     ...PROMPTS.map((text, index) => {
@@ -99,7 +109,7 @@ export function mountGrokbot(opts: {
     void send(text);
   });
   document.addEventListener("pointerdown", (event) => {
-    if (!open) return;
+    if (!open || resizing) return;
     const target = event.target;
     if (!(target instanceof Node)) return;
     if (panel.contains(target) || toggle.contains(target)) return;
@@ -154,11 +164,14 @@ export function mountGrokbot(opts: {
         body = raw ? (JSON.parse(raw) as typeof body) : {};
       } catch {
         waiting.remove();
+        const looksLikeHtml = /^\s*</.test(raw) || raw.includes("<!DOCTYPE");
         log.append(
           line(
-            response.status === 404
-              ? "chat api is missing on this deploy — push /api/chat and redeploy."
-              : `bad response (${response.status}).`,
+            looksLikeHtml
+              ? "chat api isn’t running here — restart vite (needs vite.config) or use the vercel deploy."
+              : response.status === 404
+                ? "chat api is missing on this deploy — push /api/chat and redeploy."
+                : `bad response (${response.status}).`,
           ),
         );
         return;
@@ -188,6 +201,50 @@ export function mountGrokbot(opts: {
       log.scrollTop = log.scrollHeight;
       if (open) input.focus();
     }
+  }
+
+  function bindResize(handle: HTMLElement): void {
+    let startY = 0;
+    let startHeight = 0;
+
+    handle.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      resizing = true;
+      startY = event.clientY;
+      startHeight = dialogue.getBoundingClientRect().height;
+      handle.setPointerCapture(event.pointerId);
+      document.body.style.cursor = "ns-resize";
+      document.body.style.userSelect = "none";
+    });
+
+    handle.addEventListener("pointermove", (event) => {
+      if (!resizing) return;
+      // Drag up → taller box (bottom is fixed).
+      const next = startHeight + (startY - event.clientY);
+      applyHeight(next);
+    });
+
+    const endResize = (event: PointerEvent) => {
+      if (!resizing) return;
+      resizing = false;
+      boxHeight = dialogue.getBoundingClientRect().height;
+      if (handle.hasPointerCapture(event.pointerId)) {
+        handle.releasePointerCapture(event.pointerId);
+      }
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+
+    handle.addEventListener("pointerup", endResize);
+    handle.addEventListener("pointercancel", endResize);
+  }
+
+  function applyHeight(px: number): void {
+    const maxHeight = Math.min(window.innerHeight * 0.78, 640);
+    const clamped = Math.max(minHeight, Math.min(maxHeight, px));
+    dialogue.style.setProperty("--dialogue-height", `${Math.round(clamped)}px`);
   }
 
   return {
