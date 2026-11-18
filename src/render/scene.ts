@@ -130,7 +130,9 @@ export function renderScene(
       const toggleId =
         focus.node.kind === "folder" ? hoverId : (focus.node.parent ?? hoverId);
       const open = expanded.has(toggleId);
-      hits.push(...drawHoverMenu(focus.col, focus.row, hoverId, open, cols, rows, plotOver));
+      hits.push(
+        ...drawHoverMenu(focus.col, focus.row, hoverId, open, focus.node.kind === "file", cols, rows, plotOver),
+      );
     }
   }
 
@@ -275,12 +277,13 @@ function drawHoverMenu(
   row: number,
   nodeId: string,
   isOpen: boolean,
+  reading: boolean,
   cols: number,
   rows: number,
   plot: (col: number, row: number, z: number, ch: string, color: number) => void,
 ): Hit[] {
   const expandLabel = isOpen ? "[collapse]" : "[expand]";
-  const previewLabel = "[preview]";
+  const previewLabel = reading ? "[read]" : "[preview]";
   const cx = Math.round(col);
   const cy = Math.round(row);
   const need = Math.max(expandLabel.length, previewLabel.length) + 6;

@@ -125,6 +125,74 @@
       #panel[hidden] {
         display: none;
       }
+      #reader {
+        position: fixed;
+        inset: 0;
+        z-index: 8;
+        display: grid;
+        place-items: center;
+        padding: 1.5rem;
+        background: rgba(0, 0, 0, 0.62);
+      }
+      #reader[hidden] {
+        display: none;
+      }
+      #reader .reader-box {
+        width: min(40rem, 100%);
+        height: min(72vh, 40rem);
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        background: #000;
+        border: 2px solid #fff;
+        color: #e8e4dc;
+        font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.55;
+      }
+      #reader .plate {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.9rem 1.1rem 0.4rem;
+      }
+      #reader .plate-main {
+        min-width: 0;
+      }
+      #reader h2 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        color: #f7f3ea;
+      }
+      #reader .kind,
+      #reader .path {
+        margin: 0.15rem 0 0;
+        color: #9a948a;
+        font-size: 12px;
+      }
+      #reader-close {
+        font: inherit;
+        color: #f7f3ea;
+        background: transparent;
+        border: 0;
+        padding: 0;
+        cursor: pointer;
+      }
+      #reader-close:hover {
+        color: #fff;
+      }
+      #reader-body {
+        flex: 1;
+        min-height: 0;
+        margin: 0;
+        padding: 0.4rem 1.15rem 1.2rem;
+        overflow: auto;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
       #friends-panel {
         position: fixed;
         z-index: 3;
@@ -603,6 +671,19 @@
     <aside id="panel" hidden>
       <button id="close" type="button">close</button>
     </aside>
+    <div id="reader" hidden>
+      <div class="reader-box" role="dialog" aria-modal="true" aria-labelledby="reader-title">
+        <div class="plate">
+          <div class="plate-main">
+            <p class="kind">note</p>
+            <h2 id="reader-title"></h2>
+            <p id="reader-path" class="path"></p>
+          </div>
+          <button id="reader-close" type="button">close</button>
+        </div>
+        <div id="reader-body" tabindex="0"></div>
+      </div>
+    </div>
     <button
       id="grokbot-toggle"
       type="button"

@@ -161,9 +161,10 @@ export function createRenderer(
     const hit = nearestHit(pointerX, pointerY, menuLocked ? menuId : null);
     dragging = false;
     if (moved < 5 && hit) {
-      if (hit.action === "expand" || hit.action === "preview") {
-        if (hit.action === "expand") opts?.onExpand?.(hit.id);
-        else opts?.onPreview?.(hit.id);
+      const file = graph.nodes.find((node) => node.id === hit.id)?.kind === "file";
+      if (hit.action === "expand") opts?.onExpand?.(hit.id);
+      else if (hit.action === "preview" || file) opts?.onPreview?.(hit.id);
+      if (hit.action === "expand" || hit.action === "preview" || file) {
         menuLocked = false;
         menuId = null;
         hoverId = null;

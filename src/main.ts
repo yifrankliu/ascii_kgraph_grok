@@ -1,6 +1,7 @@
 import { enrich } from "./graph/enrich";
 import { layout } from "./graph/layout";
-import { skeletonFromFiles } from "./graph/skeleton";
+import { fileNodeId, skeletonFromFiles } from "./graph/skeleton";
+import type { NoteFile } from "./graph/skeleton";
 import type { Graph, GraphNode } from "./graph/types";
 import { createRenderer } from "./render/renderer";
 import { mountBackground, type BackgroundPreset } from "./ui/background";
@@ -86,6 +87,11 @@ const renderer = createRenderer(stage, {
   onPreview(id) {
     const node = graph.nodes.find((item) => item.id === id);
     if (!node) return;
+    if (node.kind === "file") {
+      shell.read(node);
+      shell.status(`Reading · ${node.label}`);
+      return;
+    }
     shell.show(node, graph);
     shell.status(`Preview · ${node.label}`);
   },
@@ -232,7 +238,24 @@ function showPerson(view: FriendView): void {
   const node = source.nodes.find((item) => item.id === view.nodeId);
   if (!node) return;
   reveal(node, source);
-  shell.show(node, source);
+  if (node.kind === "file") shell.read(node);
+  else shell.show(node, source);
+}
+
+async function attachBodies(next: Graph, notes: NoteFile[]): Promise<void> {
+  const title = next.title ?? "";
+  await Promise.all(
+    notes.map(async (note) => {
+      if (/\.pdf$/i.test(note.path)) return;
+      const node = next.nodes.find((item) => item.id === fileNodeId(note.path, title));
+      if (!node) return;
+      try {
+        node.body = (await note.file.text()).replace(/\r\n/g, "\n").trim();
+      } catch {
+        node.body = "";
+      }
+    }),
+  );
 }
 
 function setName(name: string): void {
@@ -261,6 +284,9 @@ shell.bindFiles((notes) => {
   }
   live = true;
   const next = skeletonFromFiles(notes.kept);
+  void attachBodies(next, notes.kept).then(() => {
+    if (graph === next) renderer.setGraph(next);
+  });
   expandAllFolders(next);
   show(next);
   shell.hide();

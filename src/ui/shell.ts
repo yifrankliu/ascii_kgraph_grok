@@ -5,11 +5,16 @@ import { captureDrop } from "../ingest/files";
 export function mountShell(): {
   status: (message: string) => void;
   show: (node: GraphNode, graph: Graph) => void;
+  read: (node: GraphNode) => void;
   hide: () => void;
   bindFiles: (handler: (notes: ChosenNotes) => void) => void;
 } {
   const statusEl = required("#status");
   const panel = required("#panel");
+  const reader = required("#reader");
+  const readerTitle = required("#reader-title");
+  const readerPath = required("#reader-path");
+  const readerBody = required("#reader-body");
   const picker = required("#picker") as HTMLInputElement;
   const reroot = required("#reroot");
   let handler: ((notes: ChosenNotes) => void) | null = null;
@@ -38,23 +43,62 @@ export function mountShell(): {
   required("#close").addEventListener("click", () => {
     panel.hidden = true;
   });
+  required("#reader-close").addEventListener("click", closeReader);
+  reader.addEventListener("click", (event) => {
+    if (event.target === reader) closeReader();
+  });
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (reader.hidden || event.key !== "Escape") return;
+      event.stopPropagation();
+      closeReader();
+    },
+    true,
+  );
 
   return {
     status(message) {
       statusEl.textContent = message;
     },
     show(node, graph) {
+      if (node.kind === "file") {
+        openReader(node);
+        return;
+      }
       openNode(node, graph);
+    },
+    read(node) {
+      openReader(node);
     },
     hide() {
       panel.hidden = true;
+      closeReader();
     },
     bindFiles(next) {
       handler = next;
     },
   };
 
+  function closeReader(): void {
+    reader.hidden = true;
+    readerBody.textContent = "";
+  }
+
+  function openReader(node: GraphNode): void {
+    readerTitle.textContent = node.label;
+    readerPath.textContent = node.id;
+    readerBody.textContent = node.body?.trim() || node.summary || "This note has no text loaded.";
+    reader.hidden = false;
+    readerBody.scrollTop = 0;
+    readerBody.focus();
+  }
+
   function openNode(node: GraphNode, graph: Graph) {
+    if (node.kind === "file") {
+      openReader(node);
+      return;
+    }
     panel.hidden = false;
     panel.replaceChildren(
       panelView(node, graph, (id) => {

@@ -6,6 +6,8 @@ export interface GraphNode {
   kind: NodeKind;
   parent?: string;
   summary?: string;
+  /** Full note text when the file was loaded from a folder. */
+  body?: string;
   concepts?: string[];
   status?: "pending" | "ready" | "failed";
   x?: number;

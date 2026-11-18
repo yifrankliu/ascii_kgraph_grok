@@ -23,6 +23,13 @@ export function folderTitle(files: NoteFile[]): string {
   return "notes";
 }
 
+/** Node id a note receives inside skeletonFromFiles. */
+export function fileNodeId(path: string, title: string): string {
+  const raw = path.replace(/\\/g, "/").split("/").filter(Boolean);
+  const parts = raw[0] === title ? raw : [title, ...raw];
+  return parts.join("/");
+}
+
 export function skeletonFromFiles(files: NoteFile[]): Graph {
   const title = folderTitle(files);
   const nodes = new Map<string, GraphNode>();
@@ -35,8 +42,7 @@ export function skeletonFromFiles(files: NoteFile[]): Graph {
   });
 
   for (const note of files) {
-    const raw = note.path.replace(/\\/g, "/").split("/").filter(Boolean);
-    const parts = raw[0] === title ? raw : [title, ...raw];
+    const parts = fileNodeId(note.path, title).split("/");
     let parent: string | undefined;
     for (let i = 0; i < parts.length; i++) {
       const id = parts.slice(0, i + 1).join("/");

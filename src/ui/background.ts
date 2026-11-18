@@ -29,7 +29,12 @@ export function mountBackground(opts?: { onUserPick?: (name: BackgroundPreset) =
   const host = document.createElement("pre");
   host.id = "backdrop";
   host.setAttribute("aria-hidden", "true");
-  document.body.prepend(host);
+  const canvas = document.createElement("canvas");
+  canvas.id = "matrix-canvas";
+  canvas.hidden = true;
+  canvas.setAttribute("aria-hidden", "true");
+  document.body.prepend(host, canvas);
+  const ctx = canvas.getContext("2d", { alpha: true, desynchronized: true });
 
   const grid = createGrid();
   const koi = createKoi();
@@ -44,6 +49,7 @@ export function mountBackground(opts?: { onUserPick?: (name: BackgroundPreset) =
   let bits: Uint8Array | null = null;
   let roofs = new Int16Array(0);
   let bitsAt = 0;
+  let matrixCell = { cols: 80, rows: 40, w: 10, h: 16, font: 16, dpr: 1 };
 
   const buttons = mountControls((name) => setPreset(name));
 
@@ -65,7 +71,8 @@ export function mountBackground(opts?: { onUserPick?: (name: BackgroundPreset) =
     rows = clamp(rows, 12, maxRows + 2);
     grid.resize(cols, rows, cell.h / cell.w);
     koi.resize(cols, rows);
-    matrix.resize(cols, rows);
+    matrixCell = fitMatrix(ctx);
+    matrix.resize(matrixCell.cols, matrixCell.rows);
     bits = null;
     bitsAt = 0;
     forgetStage();
@@ -74,6 +81,10 @@ export function mountBackground(opts?: { onUserPick?: (name: BackgroundPreset) =
   }
 
   function paint(dt: number): void {
+    if (preset !== "matrix") {
+      canvas.hidden = true;
+      host.style.display = "";
+    }
     if (preset === "dark") {
       if (shown !== "dark") {
         host.textContent = "";
@@ -81,25 +92,27 @@ export function mountBackground(opts?: { onUserPick?: (name: BackgroundPreset) =
       }
       return;
     }
+    if (preset === "matrix" && ctx) {
+      if (shown !== "matrix") host.textContent = "";
+      shown = "matrix";
+      host.style.display = "none";
+      canvas.hidden = false;
+      matrix.draw(matrixSurface(), dt);
+      matrix.blit(ctx, matrixCell.w, matrixCell.h, matrixCell.font, matrixCell.dpr, window.innerWidth, window.innerHeight);
+      return;
+    }
     shown = preset;
     grid.clear();
-    if (preset === "koi") {
-      grid.hold(graphBox(cell));
-      grid.cover(null);
-      koi.draw(grid, dt);
-    } else {
-      grid.hold(null);
-      grid.cover(matrixSolids(), roofs);
-      matrix.draw(grid, dt);
-    }
+    grid.hold(graphBox(cell));
+    grid.cover(null);
+    koi.draw(grid, dt);
     host.innerHTML = grid.html();
   }
 
   function loop(now: number): void {
     if (!alive) return;
     raf = requestAnimationFrame(loop);
-    const budget = preset === "matrix" ? 48 : 32;
-    if (last !== 0 && now - last < budget) return;
+    if (last !== 0 && now - last < 32) return;
     const dt = last ? Math.min(0.05, (now - last) / 1000) : 0.016;
     last = now;
     paint(dt);
@@ -123,17 +136,78 @@ export function mountBackground(opts?: { onUserPick?: (name: BackgroundPreset) =
     kick();
   }
 
-  function matrixSolids(): Uint8Array | null {
-    const count = grid.cols * grid.rows;
-    if (count <= 0) return null;
+  function fitMatrix(context: CanvasRenderingContext2D | null): {
+    cols: number;
+    rows: number;
+    w: number;
+    h: number;
+    font: number;
+    dpr: number;
+  } {
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
+    const viewW = window.innerWidth;
+    const viewH = window.innerHeight;
+    const pixelsW = Math.max(1, Math.round(viewW * dpr));
+    const pixelsH = Math.max(1, Math.round(viewH * dpr));
+    if (canvas.width !== pixelsW || canvas.height !== pixelsH) {
+      canvas.width = pixelsW;
+      canvas.height = pixelsH;
+    }
+    let font = 16;
+    let width = 10;
+    if (context) {
+      context.font = `${font}px ui-monospace, Consolas, monospace`;
+      width = context.measureText("M").width || 10;
+    }
+    let cols = Math.ceil(viewW / width);
+    let rows = Math.ceil(viewH / font);
+    if (cols > 110 || rows > 42) {
+      const scale = Math.max(cols / 110, rows / 42);
+      font = Math.ceil(16 * scale);
+      width = font * 0.62;
+      if (context) {
+        context.font = `${font}px ui-monospace, Consolas, monospace`;
+        width = context.measureText("M").width || width;
+      }
+      cols = Math.ceil(viewW / width);
+      rows = Math.ceil(viewH / font);
+    }
+    return {
+      cols: clamp(cols, 24, 120),
+      rows: clamp(rows, 12, 48),
+      w: width,
+      h: font,
+      font,
+      dpr,
+    };
+  }
+
+  function matrixSurface(): { roof(col: number): number; blocked(col: number, row: number): boolean } {
+    const count = matrixCell.cols * matrixCell.rows;
     const now = performance.now();
-    if (!bits || bits.length !== count || roofs.length !== grid.cols || now - bitsAt > 160) {
+    if (!bits || bits.length !== count || roofs.length !== matrixCell.cols || now - bitsAt > 400) {
       if (!bits || bits.length !== count) bits = new Uint8Array(count);
-      if (roofs.length !== grid.cols) roofs = new Int16Array(grid.cols);
-      writeSolids(cell, grid.cols, grid.rows, bits, roofs);
+      if (roofs.length !== matrixCell.cols) roofs = new Int16Array(matrixCell.cols);
+      writeSolids({ w: matrixCell.w, h: matrixCell.h }, matrixCell.cols, matrixCell.rows, bits, roofs);
       bitsAt = now;
     }
-    return bits;
+    const cols = matrixCell.cols;
+    const rows = matrixCell.rows;
+    const solid = bits;
+    const tops = roofs;
+    return {
+      roof(col) {
+        const c = Math.round(col);
+        if (c < 0 || c >= tops.length) return -1;
+        return tops[c] ?? -1;
+      },
+      blocked(col, row) {
+        const c = Math.round(col);
+        const r = Math.round(row);
+        if (!solid || c < 0 || r < 0 || c >= cols || r >= rows) return false;
+        return solid[r * cols + c] === 1;
+      },
+    };
   }
 
   function kick(): void {
@@ -163,6 +237,7 @@ export function mountBackground(opts?: { onUserPick?: (name: BackgroundPreset) =
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
       host.remove();
+      canvas.remove();
       document.getElementById("bg-presets")?.remove();
     },
   };
@@ -355,7 +430,7 @@ function forgetStage(): void {
 
 function stageMetrics(stage: HTMLElement): { x: number; y: number; w: number; h: number } | null {
   const now = performance.now();
-  if (glyphCache && now - glyphCache.at < 200) return glyphCache;
+  if (glyphCache && now - glyphCache.at < 500) return glyphCache;
   const next = stageCell(stage);
   if (!next) return glyphCache;
   glyphCache = { ...next, at: now };
@@ -460,6 +535,17 @@ function ensureStyle(): void {
       white-space: pre;
     }
     #backdrop .bg-probe { position: absolute; visibility: hidden; font: inherit; letter-spacing: inherit; }
+    #matrix-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      contain: strict;
+    }
+    #matrix-canvas[hidden] { display: none; }
     body > header,
     body > #stage { position: relative; z-index: 1; }
     body > header { text-shadow: 0 0 3px #000; }
