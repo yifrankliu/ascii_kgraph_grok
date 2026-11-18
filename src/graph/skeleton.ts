@@ -12,7 +12,8 @@ export function isNote(path: string): boolean {
 }
 
 export function labelOf(name: string): string {
-  return name.length > 18 ? `${name.slice(0, 17)}…` : name;
+  const bare = name.replace(/\.(pdf|md|txt)$/i, "");
+  return bare.length > 18 ? `${bare.slice(0, 17)}…` : bare;
 }
 
 /** Shared top folder when every path sits under one directory name. */

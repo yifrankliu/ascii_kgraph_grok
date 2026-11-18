@@ -61,8 +61,15 @@
         outline: 1px solid #7eb8c9;
         outline-offset: 3px;
       }
-      .header-pad {
+      #graph-name {
         justify-self: end;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.22em;
+        text-transform: lowercase;
+        color: #f7f3ea;
+        white-space: nowrap;
       }
       #stage {
         width: 100%;
@@ -139,7 +146,8 @@
       #friends-panel[hidden] {
         display: none;
       }
-      #friends-find {
+      #friends-find,
+      #friends-add {
         display: block;
         width: 100%;
         box-sizing: border-box;
@@ -154,12 +162,17 @@
         border-radius: 0;
         outline: none;
       }
-      #friends-find::placeholder {
+      #friends-find::placeholder,
+      #friends-add::placeholder {
         color: #9a948a;
       }
       #friends-find:focus-visible,
+      #friends-add:focus-visible,
       #friends-toggle:focus-visible,
-      #friends-panel button:focus-visible {
+      #friends-panel button:focus-visible,
+      #grokbot-toggle:focus-visible,
+      #grokbot-panel button:focus-visible,
+      #grokbot-input:focus-visible {
         outline: 1px solid #7eb8c9;
         outline-offset: 3px;
       }
@@ -219,6 +232,7 @@
       #panel .body,
       #friends-panel .body {
         color: #f7f3ea;
+        white-space: pre-wrap;
       }
       #panel .thread,
       #friends-panel .thread {
@@ -284,13 +298,30 @@
       #friends-panel .reply-title:hover {
         color: #7eb8c9;
       }
+      #friends-panel .reply-line {
+        display: flex;
+        gap: 0.45rem;
+        align-items: baseline;
+      }
+      #friends-panel .reply-line .reply-title {
+        display: inline;
+        width: auto;
+      }
+      #friends-panel .f-remove {
+        margin-left: auto;
+        color: #9a948a;
+      }
+      #friends-panel .f-remove:hover {
+        color: #fff;
+      }
       #panel .reply-note,
       #friends-panel .reply-note {
         margin-top: 0.2rem;
         color: #c8c2b8;
       }
       #close,
-      #friends-close {
+      #friends-close,
+      #grokbot-close {
         flex: 0 0 auto;
         font: inherit;
         font-size: 11px;
@@ -302,9 +333,204 @@
         cursor: pointer;
       }
       #close:hover,
-      #friends-close:hover {
+      #friends-close:hover,
+      #grokbot-close:hover {
         background: #fff;
         color: #000;
+      }
+      #grokbot-panel {
+        position: fixed;
+        z-index: 5;
+        left: 0.75rem;
+        right: 0.75rem;
+        bottom: 0.65rem;
+        width: auto;
+        max-width: 52rem;
+        margin: 0 auto;
+        box-sizing: border-box;
+        padding: 0;
+        overflow: visible;
+        background: transparent;
+        border: 0;
+        color: #e8e4dc;
+        font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.4;
+        pointer-events: none;
+      }
+      #grokbot-panel[hidden] {
+        display: none;
+      }
+      #grokbot-panel .dialogue {
+        pointer-events: auto;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 0.85rem 1rem;
+        align-items: stretch;
+        padding: 0.75rem 0.9rem 0.7rem;
+        background: #000;
+        border: 2px solid #fff;
+        box-shadow:
+          0 0 0 1px #000,
+          0 0 0 3px #7eb8c9,
+          0 12px 28px rgba(0, 0, 0, 0.55);
+      }
+      #grokbot-panel .dialogue-face {
+        margin: 0;
+        align-self: center;
+        font-size: 6px;
+        line-height: 1.05;
+        letter-spacing: 0;
+        white-space: pre;
+        color: #d7f3f8;
+        text-shadow: 0 0 10px rgba(126, 184, 201, 0.3);
+      }
+      #grokbot-panel .dialogue-main {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+        min-height: 9.5rem;
+        max-height: min(38vh, 16rem);
+      }
+      #grokbot-panel .dialogue-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding-bottom: 0.35rem;
+        border-bottom: 1px solid #fff;
+      }
+      #grokbot-panel .dialogue-name {
+        color: #7eb8c9;
+        font-size: 12px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+      }
+      #grokbot-log {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+        overscroll-behavior: contain;
+        padding-right: 0.25rem;
+      }
+      #grokbot-panel .dialogue-line {
+        margin: 0 0 0.45rem;
+        color: #f7f3ea;
+        white-space: pre-wrap;
+      }
+      #grokbot-panel .dialogue-line-you {
+        color: #9a948a;
+      }
+      #grokbot-panel .dialogue-line-sources {
+        color: #7eb8c9;
+        font-size: 11px;
+      }
+      #grokbot-panel .dialogue-line-wait {
+        color: #9a948a;
+        letter-spacing: 0.2em;
+      }
+      #grokbot-prompts {
+        display: grid;
+        gap: 0.15rem;
+        padding-top: 0.2rem;
+        border-top: 1px dashed #3a3832;
+      }
+      #grokbot-panel .dialogue-choice {
+        font: inherit;
+        display: block;
+        width: 100%;
+        margin: 0;
+        padding: 0.12rem 0;
+        border: 0;
+        background: transparent;
+        color: #c8c2b8;
+        text-align: left;
+        cursor: pointer;
+      }
+      #grokbot-panel .dialogue-choice:hover {
+        color: #7eb8c9;
+      }
+      #grokbot-form {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 0.45rem;
+        align-items: center;
+        margin: 0;
+        padding-top: 0.35rem;
+        border-top: 1px solid #fff;
+      }
+      #grokbot-panel .dialogue-caret {
+        color: #7eb8c9;
+      }
+      #grokbot-input {
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0.15rem 0;
+        font: inherit;
+        font-size: 13px;
+        color: #f7f3ea;
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        outline: none;
+      }
+      #grokbot-input::placeholder {
+        color: #9a948a;
+      }
+      #grokbot-toggle {
+        position: fixed;
+        z-index: 4;
+        left: 0.7rem;
+        bottom: 0.55rem;
+        display: grid;
+        gap: 0.1rem;
+        justify-items: center;
+        margin: 0;
+        padding: 0.15rem 0.2rem;
+        border: 0;
+        background: transparent;
+        color: #f7f3ea;
+        font: inherit;
+        cursor: pointer;
+        line-height: 1;
+      }
+      body.grokbot-open #grokbot-toggle {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #grokbot-toggle .grokbot-face {
+        margin: 0;
+        font-size: 5px;
+        line-height: 1.05;
+        letter-spacing: 0;
+        white-space: pre;
+        color: #d7f3f8;
+      }
+      #grokbot-toggle .grokbot-label {
+        margin: 0;
+        font-size: 8px;
+        letter-spacing: 0.16em;
+        text-transform: lowercase;
+        color: #9a948a;
+      }
+      #grokbot-toggle[aria-expanded="true"] .grokbot-face,
+      #grokbot-toggle:hover .grokbot-face {
+        color: #7eb8c9;
+      }
+      #grokbot-toggle[aria-expanded="true"] .grokbot-label,
+      #grokbot-toggle:hover .grokbot-label {
+        color: #d7f3f8;
+      }
+      @media (max-width: 640px) {
+        #grokbot-panel .dialogue {
+          grid-template-columns: 1fr;
+        }
+        #grokbot-panel .dialogue-face {
+          justify-self: start;
+          font-size: 5px;
+        }
       }
     </style>
   </head>
@@ -314,7 +540,7 @@
         friends
       </button>
       <h1>kgraph</h1>
-      <span class="header-pad" aria-hidden="true"></span>
+      <span id="graph-name">frank</span>
     </header>
     <aside id="friends-panel" hidden aria-labelledby="friends-title">
       <div class="plate">
@@ -326,6 +552,15 @@
         <button id="friends-close" type="button">close</button>
       </div>
       <input
+        id="friends-add"
+        type="text"
+        placeholder="search a yale email"
+        aria-label="Search Yale emails to add a friend"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <div id="friends-suggest"></div>
+      <input
         id="friends-find"
         type="text"
         placeholder="index notes, concepts, people"
@@ -336,6 +571,30 @@
       <div id="friends-index"></div>
       <div id="friends-threads"></div>
     </aside>
+    <aside id="grokbot-panel" hidden aria-label="grokbot dialogue">
+      <div class="dialogue">
+        <pre class="dialogue-face" aria-hidden="true"></pre>
+        <div class="dialogue-main">
+          <div class="dialogue-head">
+            <span class="dialogue-name" id="grokbot-title">grokbot</span>
+            <button id="grokbot-close" type="button">close</button>
+          </div>
+          <div id="grokbot-log"></div>
+          <div id="grokbot-prompts"></div>
+          <form id="grokbot-form">
+            <span class="dialogue-caret" aria-hidden="true">›</span>
+            <input
+              id="grokbot-input"
+              type="text"
+              placeholder="say something…"
+              aria-label="Ask grokbot"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </form>
+        </div>
+      </div>
+    </aside>
     <pre id="stage"></pre>
     <footer>
       <button id="reroot" type="button">set different root directory</button>
@@ -344,6 +603,16 @@
     <aside id="panel" hidden>
       <button id="close" type="button">close</button>
     </aside>
+    <button
+      id="grokbot-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="grokbot-panel"
+      title="grokbot"
+    >
+      <pre class="grokbot-face" aria-hidden="true"></pre>
+      <span class="grokbot-label">grokbot</span>
+    </button>
     <input id="picker" type="file" webkitdirectory directory multiple hidden />
     <script type="module" src="/src/main.ts"></script>
   </body>

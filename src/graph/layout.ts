@@ -41,7 +41,7 @@ function placeTree(graph: Graph): void {
   const root = byId.get(rootId);
   if (root) {
     root.x = 0;
-    root.y = 0.82;
+    root.y = 0.98;
     root.z = 0;
     root.depth = 0;
   }
@@ -82,15 +82,15 @@ function placeFan(
   const node = byId.get(id);
   if (!node) return;
   const mid = start + span / 2;
-  const radius = 0.38 + (depth - 1) * 0.48;
+  const radius = 0.55 + (depth - 1) * 0.7;
   node.x = Math.sin(mid) * radius;
   node.z = Math.cos(mid) * radius;
-  node.y = 0.88 - depth * 0.48;
+  node.y = 1.05 - depth * 0.52;
   node.depth = depth;
 
   const kids = children.get(id) ?? [];
   if (kids.length === 0) return;
-  const usable = Math.max(span * 0.9, Math.min(span * 1.35, kids.length * 0.4));
+  const usable = Math.max(span * 0.95, Math.min(span * 1.55, kids.length * 0.55));
   const shares = angleShares(
     kids.map((kid) => weight.get(kid) ?? 1),
     usable,

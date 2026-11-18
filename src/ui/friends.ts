@@ -1,7 +1,13 @@
+import type { BackgroundPreset } from "./background";
 import type { Graph, GraphNode } from "../graph/types";
+
+const OWNER = "frank";
 
 interface FriendRecord {
   handle: string;
+  email: string;
+  major: string;
+  preset: BackgroundPreset;
   graph: Graph;
 }
 
@@ -13,6 +19,7 @@ interface RelateLine {
 
 interface Comment {
   id: string;
+  handle: string;
   kind: "graph" | "folder" | "file";
   label: string;
   meta: string;
@@ -21,13 +28,27 @@ interface Comment {
   relates: RelateLine[];
   yours: boolean;
   nodeId?: string;
+  major?: string;
+  preset?: BackgroundPreset;
   children: Comment[];
 }
 
 interface Person {
   handle: string;
+  email?: string;
   graph: Graph;
   yours: boolean;
+  major?: string;
+  preset?: BackgroundPreset;
+}
+
+export interface FriendView {
+  handle: string;
+  yours: boolean;
+  graph: Graph;
+  preset?: BackgroundPreset;
+  major?: string;
+  nodeId?: string;
 }
 
 interface ConceptHit {
@@ -36,8 +57,14 @@ interface ConceptHit {
   handles: string[];
 }
 
-export function mountFriends(opts?: { onOpenYours?: (id: string) => void }): {
+export function mountFriends(opts?: {
+  onView?: (view: FriendView) => void;
+  onOpen?: () => void;
+}): {
   setYours(graph: Graph): void;
+  setViewing(handle: string): void;
+  setOpen(open: boolean): void;
+  isOpen(): boolean;
 } {
   const toggle = required("#friends-toggle");
   const panel = required("#friends-panel");
@@ -47,19 +74,28 @@ export function mountFriends(opts?: { onOpenYours?: (id: string) => void }): {
   const findNode = required("#friends-find");
   if (!(findNode instanceof HTMLInputElement)) throw new Error("Missing #friends-find");
   const findEl: HTMLInputElement = findNode;
+  const addNode = required("#friends-add");
+  if (!(addNode instanceof HTMLInputElement)) throw new Error("Missing #friends-add");
+  const addEl: HTMLInputElement = addNode;
+  const suggestEl = required("#friends-suggest");
   const close = required("#friends-close");
 
   let yours: Graph = { nodes: [], edges: [] };
+  let directory: FriendRecord[] = [];
   let friends: FriendRecord[] = [];
   let open = false;
   let loaded = false;
   let failed = false;
+  let viewing = OWNER;
   const collapsed = new Set<string>();
   const seen = new Set<string>();
 
   toggle.addEventListener("click", () => setOpen(!open));
   close.addEventListener("click", () => setOpen(false));
   findEl.addEventListener("input", () => {
+    if (open) paint();
+  });
+  addEl.addEventListener("input", () => {
     if (open) paint();
   });
   document.addEventListener("pointerdown", (event) => {
@@ -71,6 +107,11 @@ export function mountFriends(opts?: { onOpenYours?: (id: string) => void }): {
   });
   document.addEventListener("keydown", (event) => {
     if (!open || event.key !== "Escape") return;
+    if (event.target === addEl && addEl.value) {
+      addEl.value = "";
+      paint();
+      return;
+    }
     if (event.target === findEl && findEl.value) {
       findEl.value = "";
       paint();
@@ -86,6 +127,12 @@ export function mountFriends(opts?: { onOpenYours?: (id: string) => void }): {
       yours = graph;
       if (open) paint();
     },
+    setViewing(handle) {
+      viewing = handle;
+      if (open) paint();
+    },
+    setOpen,
+    isOpen: () => open,
   };
 
   function setOpen(next: boolean): void {
@@ -94,8 +141,9 @@ export function mountFriends(opts?: { onOpenYours?: (id: string) => void }): {
     panel.hidden = !open;
     toggle.setAttribute("aria-expanded", open ? "true" : "false");
     if (open) {
+      opts?.onOpen?.();
       paint();
-      findEl.focus();
+      addEl.focus();
     } else if (was) {
       toggle.focus();
     }
@@ -105,9 +153,13 @@ export function mountFriends(opts?: { onOpenYours?: (id: string) => void }): {
     try {
       const response = await fetch("/friends.json");
       if (!response.ok) throw new Error(String(response.status));
-      const data = (await response.json()) as { friends?: unknown };
-      const list = Array.isArray(data.friends) ? data.friends : [];
-      friends = list.filter(isFriend);
+      const data = (await response.json()) as { friends?: unknown; added?: unknown };
+      const list = Array.isArray(data.friends) ? data.friends.filter(isFriend) : [];
+      directory = list;
+      const added = new Set(
+        Array.isArray(data.added) ? data.added.filter((item): item is string => typeof item === "string") : list.map((item) => item.handle),
+      );
+      friends = list.filter((item) => added.has(item.handle));
     } catch {
       failed = true;
     }
@@ -133,6 +185,7 @@ export function mountFriends(opts?: { onOpenYours?: (id: string) => void }): {
     else countEl.textContent = tally;
 
     indexEl.replaceChildren(indexView(index, query));
+    suggestEl.replaceChildren(suggestView(norm(addEl.value)));
     const visible = trees
       .map((tree) => (query ? prune(tree, query) : tree))
       .filter((tree): tree is Comment => tree !== null);
@@ -147,8 +200,19 @@ export function mountFriends(opts?: { onOpenYours?: (id: string) => void }): {
 
   function roster(): Person[] {
     const people: Person[] = [];
-    if (yours.nodes.length > 0) people.push({ handle: "you", graph: yours, yours: true });
-    for (const friend of friends) people.push({ handle: friend.handle, graph: friend.graph, yours: false });
+    if (yours.nodes.length > 0) {
+      people.push({ handle: OWNER, graph: yours, yours: true, major: "your graph" });
+    }
+    for (const friend of friends) {
+      people.push({
+        handle: friend.handle,
+        graph: friend.graph,
+        yours: false,
+        major: friend.major,
+        preset: friend.preset,
+        email: friend.email,
+      });
+    }
     return people;
   }
 
@@ -162,6 +226,100 @@ export function mountFriends(opts?: { onOpenYours?: (id: string) => void }): {
     if (collapsed.has(id)) collapsed.delete(id);
     else collapsed.add(id);
     paint();
+  }
+
+  function viewFrom(comment: Comment, nodeId?: string): void {
+    const graph = graphOf(comment.handle);
+    if (!graph) return;
+    if (collapsed.has(comment.handle)) collapsed.delete(comment.handle);
+    viewing = comment.handle;
+    paint();
+    const record = friends.find((friend) => friend.handle === comment.handle);
+    opts?.onView?.({
+      handle: comment.handle,
+      yours: comment.yours,
+      graph,
+      preset: record?.preset,
+      major: record?.major ?? comment.major,
+      nodeId,
+    });
+  }
+
+  function graphOf(handle: string): Graph | null {
+    if (handle === OWNER) return yours.nodes.length > 0 ? yours : null;
+    return friends.find((friend) => friend.handle === handle)?.graph ?? null;
+  }
+
+  function addFriend(handle: string): void {
+    if (friends.some((friend) => friend.handle === handle)) return;
+    const person = directory.find((friend) => friend.handle === handle);
+    if (!person) return;
+    friends = [...friends, person];
+    addEl.value = "";
+    paint();
+  }
+
+  function removeFriend(handle: string): void {
+    const wasViewing = viewing === handle;
+    friends = friends.filter((friend) => friend.handle !== handle);
+    if (wasViewing) {
+      viewing = OWNER;
+      const graph = graphOf(OWNER);
+      if (graph) {
+        opts?.onView?.({ handle: OWNER, yours: true, graph, major: "your graph" });
+      }
+    }
+    paint();
+  }
+
+  function suggestView(query: string): DocumentFragment {
+    const fragment = document.createDocumentFragment();
+    if (!query) return fragment;
+    const matches = directory.filter((person) => {
+      const hay = `${person.email} ${person.handle} ${person.major}`.toLowerCase();
+      return hay.includes(query);
+    });
+    const section = document.createElement("section");
+    section.className = "thread";
+    const label = document.createElement("p");
+    label.className = "tag";
+    label.textContent = "add";
+    section.append(label);
+    if (matches.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "reply-note";
+      empty.textContent = "No Yale email matches.";
+      section.append(empty);
+      fragment.append(section);
+      return fragment;
+    }
+    const list = document.createElement("div");
+    list.className = "replies";
+    for (const person of matches) {
+      const added = friends.some((friend) => friend.handle === person.handle);
+      const reply = document.createElement("div");
+      reply.className = "reply";
+      const row = document.createElement("div");
+      row.className = "reply-line";
+      const who = document.createElement("p");
+      who.className = "reply-label";
+      who.textContent = person.email;
+      row.append(who);
+      const action = document.createElement("button");
+      action.type = "button";
+      action.className = "reply-title f-remove";
+      action.textContent = added ? "remove" : "add";
+      action.addEventListener("click", () => (added ? removeFriend(person.handle) : addFriend(person.handle)));
+      row.append(action);
+      const note = document.createElement("p");
+      note.className = "reply-note";
+      note.textContent = `${person.handle} · ${person.major}`;
+      reply.append(row, note);
+      list.append(reply);
+    }
+    section.append(list);
+    fragment.append(section);
+    return fragment;
   }
 
   function indexView(index: ConceptHit[], query: string): DocumentFragment {
@@ -204,17 +362,14 @@ export function mountFriends(opts?: { onOpenYours?: (id: string) => void }): {
       if (openKids) {
         for (const child of comment.children) nested.push(commentView(child, forceOpen));
       }
-      if (comment.kind === "graph" && comment.yours && comment.nodeId && opts?.onOpenYours) {
-        nested.push(openReply(comment.nodeId));
-      }
     }
     if (nested.length > 0) reply.append(replyList(nested));
     return reply;
   }
 
   function headFor(comment: Comment, openKids: boolean, forceOpen: boolean): HTMLElement {
-    const mark =
-      comment.children.length === 0 ? (comment.kind === "folder" ? "[#]" : "(o)") : openKids ? "[-]" : "[+]";
+    if (comment.kind === "graph") return graphHead(comment, openKids, forceOpen);
+    const mark = comment.children.length === 0 ? (comment.kind === "folder" ? "[#]" : "(o)") : openKids ? "[-]" : "[+]";
     const text = `${mark} ${comment.label}`;
     if (comment.children.length > 0 && !forceOpen) {
       const button = document.createElement("button");
@@ -226,19 +381,54 @@ export function mountFriends(opts?: { onOpenYours?: (id: string) => void }): {
       button.addEventListener("click", () => toggleCollapsed(comment.id));
       return button;
     }
-    if (comment.kind === "file" && comment.yours && comment.nodeId && opts?.onOpenYours) {
+    if (comment.kind === "file" && comment.nodeId && opts?.onView) {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "reply-title";
       button.textContent = text;
-      const nodeId = comment.nodeId;
-      button.addEventListener("click", () => opts.onOpenYours?.(nodeId));
+      button.addEventListener("click", () => viewFrom(comment, comment.nodeId));
       return button;
     }
     const label = document.createElement("p");
     label.className = "reply-label";
     label.textContent = text;
     return label;
+  }
+
+  function graphHead(comment: Comment, openKids: boolean, forceOpen: boolean): HTMLElement {
+    const row = document.createElement("div");
+    row.className = "reply-line";
+    if (comment.children.length > 0 && !forceOpen) {
+      const fold = document.createElement("button");
+      fold.type = "button";
+      fold.className = "reply-title";
+      fold.textContent = openKids ? "[-]" : "[+]";
+      fold.setAttribute("aria-expanded", openKids ? "true" : "false");
+      fold.setAttribute("aria-label", `${openKids ? "Collapse" : "Expand"} ${comment.label}`);
+      fold.addEventListener("click", () => toggleCollapsed(comment.id));
+      row.append(fold);
+    } else if (comment.children.length > 0) {
+      const mark = document.createElement("span");
+      mark.className = "reply-label";
+      mark.textContent = "[-]";
+      row.append(mark);
+    }
+    const name = document.createElement("button");
+    name.type = "button";
+    name.className = "reply-title";
+    name.textContent = comment.label;
+    name.setAttribute("aria-pressed", viewing === comment.handle ? "true" : "false");
+    name.addEventListener("click", () => viewFrom(comment));
+    row.append(name);
+    if (!comment.yours) {
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "reply-title f-remove";
+      remove.textContent = "remove";
+      remove.addEventListener("click", () => removeFriend(comment.handle));
+      row.append(remove);
+    }
+    return row;
   }
 
   function conceptReply(concept: string, query: string): HTMLElement {
@@ -257,12 +447,12 @@ export function mountFriends(opts?: { onOpenYours?: (id: string) => void }): {
   function relateReply(comment: Comment, relate: RelateLine): HTMLElement {
     const reply = document.createElement("div");
     reply.className = "reply";
-    if (comment.yours && opts?.onOpenYours) {
+    if (opts?.onView) {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "reply-title";
       button.textContent = `relates ${relate.label}`;
-      button.addEventListener("click", () => opts.onOpenYours?.(relate.nodeId));
+      button.addEventListener("click", () => viewFrom(comment, relate.nodeId));
       reply.append(button);
     } else {
       const label = document.createElement("p");
@@ -273,35 +463,27 @@ export function mountFriends(opts?: { onOpenYours?: (id: string) => void }): {
     if (relate.note) reply.append(replyNote(relate.note));
     return reply;
   }
-
-  function openReply(nodeId: string): HTMLElement {
-    const reply = document.createElement("div");
-    reply.className = "reply";
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "reply-title";
-    button.textContent = "open";
-    button.addEventListener("click", () => opts?.onOpenYours?.(nodeId));
-    reply.append(button);
-    return reply;
-  }
 }
 
 function buildPerson(person: Person, index: ConceptHit[]): Comment {
   const rootId = person.graph.rootId ?? person.graph.nodes.find((node) => !node.parent)?.id;
   const files = person.graph.nodes.filter((node) => node.kind === "file").length;
-  const title = person.graph.title ?? person.handle;
+  const major = person.major ?? person.graph.title ?? person.handle;
   const children = rootId ? childNodes(person.graph, rootId).map((node) => buildNode(person, node)) : [];
+  const notes = `${files} note${files === 1 ? "" : "s"}`;
   return {
     id: person.handle,
+    handle: person.handle,
     kind: "graph",
     label: person.handle,
-    meta: `${title} · ${files} note${files === 1 ? "" : "s"}`,
+    meta: person.yours ? `your graph · ${notes}` : `${person.email ?? person.handle} · ${major} · ${person.preset} · ${notes}`,
     copy: shareCopy(person, index),
     concepts: [],
     relates: [],
     yours: person.yours,
     nodeId: rootId,
+    major,
+    preset: person.preset,
     children,
   };
 }
@@ -311,6 +493,7 @@ function buildNode(person: Person, node: GraphNode): Comment {
     const files = countFiles(person.graph, node.id);
     return {
       id: `${person.handle}:${node.id}`,
+      handle: person.handle,
       kind: "folder",
       label: node.label,
       meta: `folder · ${files}`,
@@ -325,6 +508,7 @@ function buildNode(person: Person, node: GraphNode): Comment {
     node.status === "pending" ? "file · reading" : node.status === "failed" ? "file · unread" : "file";
   return {
     id: `${person.handle}:${node.id}`,
+    handle: person.handle,
     kind: "file",
     label: node.label,
     meta: status,
@@ -426,8 +610,8 @@ function hits(comment: Comment, query: string): boolean {
 }
 
 function byHandle(a: string, b: string): number {
-  if (a === "you") return -1;
-  if (b === "you") return 1;
+  if (a === OWNER) return -1;
+  if (b === OWNER) return 1;
   return a.localeCompare(b);
 }
 
@@ -438,7 +622,15 @@ function norm(value: string): string {
 function isFriend(value: unknown): value is FriendRecord {
   if (!value || typeof value !== "object") return false;
   const record = value as FriendRecord;
-  return typeof record.handle === "string" && Boolean(record.graph) && Array.isArray(record.graph.nodes);
+  return (
+    typeof record.handle === "string" &&
+    typeof record.email === "string" &&
+    record.email.endsWith("@yale.edu") &&
+    typeof record.major === "string" &&
+    (record.preset === "dark" || record.preset === "koi" || record.preset === "matrix") &&
+    Boolean(record.graph) &&
+    Array.isArray(record.graph.nodes)
+  );
 }
 
 function threadSection(tag: string, items: HTMLElement[]): HTMLElement {

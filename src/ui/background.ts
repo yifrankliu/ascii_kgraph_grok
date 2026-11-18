@@ -41,18 +41,34 @@ export function mountBackground(opts?: { onUserPick?: (name: BackgroundPreset) =
   let alive = true;
   let shown: BackgroundPreset | "" = "";
   let cell = { w: 7.2, h: 12 };
+  let bits: Uint8Array | null = null;
+  let roofs = new Int16Array(0);
+  let bitsAt = 0;
 
   const buttons = mountControls((name) => setPreset(name));
 
   function resize(): void {
+    host.style.fontSize = "";
     cell = measure(host);
-    // ceil + padding so the glyph grid always overshoots the right/bottom edge
-    // instead of leaving a blank strip when floor() truncates.
-    const cols = clamp(Math.ceil(window.innerWidth / cell.w) + 2, 24, 400);
-    const rows = clamp(Math.ceil(window.innerHeight / cell.h) + 2, 12, 160);
+    let cols = Math.ceil(window.innerWidth / cell.w);
+    let rows = Math.ceil(window.innerHeight / cell.h);
+    const maxCols = 200;
+    const maxRows = 72;
+    if (cols > maxCols || rows > maxRows) {
+      const scale = Math.max(cols / maxCols, rows / maxRows);
+      host.style.fontSize = `${Math.ceil(12 * scale)}px`;
+      cell = measure(host);
+      cols = Math.ceil(window.innerWidth / cell.w) + 1;
+      rows = Math.ceil(window.innerHeight / cell.h) + 1;
+    }
+    cols = clamp(cols, 24, maxCols + 2);
+    rows = clamp(rows, 12, maxRows + 2);
     grid.resize(cols, rows, cell.h / cell.w);
     koi.resize(cols, rows);
     matrix.resize(cols, rows);
+    bits = null;
+    bitsAt = 0;
+    forgetStage();
     shown = "";
     paint(0);
   }
@@ -73,7 +89,7 @@ export function mountBackground(opts?: { onUserPick?: (name: BackgroundPreset) =
       koi.draw(grid, dt);
     } else {
       grid.hold(null);
-      grid.cover(graphSolids(cell, grid.cols, grid.rows));
+      grid.cover(matrixSolids(), roofs);
       matrix.draw(grid, dt);
     }
     host.innerHTML = grid.html();
@@ -82,7 +98,8 @@ export function mountBackground(opts?: { onUserPick?: (name: BackgroundPreset) =
   function loop(now: number): void {
     if (!alive) return;
     raf = requestAnimationFrame(loop);
-    if (last !== 0 && now - last < 32) return;
+    const budget = preset === "matrix" ? 48 : 32;
+    if (last !== 0 && now - last < budget) return;
     const dt = last ? Math.min(0.05, (now - last) / 1000) : 0.016;
     last = now;
     paint(dt);
@@ -104,6 +121,19 @@ export function mountBackground(opts?: { onUserPick?: (name: BackgroundPreset) =
     shown = "";
     paint(0.016);
     kick();
+  }
+
+  function matrixSolids(): Uint8Array | null {
+    const count = grid.cols * grid.rows;
+    if (count <= 0) return null;
+    const now = performance.now();
+    if (!bits || bits.length !== count || roofs.length !== grid.cols || now - bitsAt > 160) {
+      if (!bits || bits.length !== count) bits = new Uint8Array(count);
+      if (roofs.length !== grid.cols) roofs = new Int16Array(grid.cols);
+      writeSolids(cell, grid.cols, grid.rows, bits, roofs);
+      bitsAt = now;
+    }
+    return bits;
   }
 
   function kick(): void {
@@ -142,7 +172,7 @@ function createGrid(): CellGrid & {
   resize(cols: number, rows: number, aspect: number): void;
   clear(): void;
   hold(next: Mask | null): void;
-  cover(bits: Uint8Array | null): void;
+  cover(bits: Uint8Array | null, ready?: Int16Array): void;
   roof(col: number): number;
   blocked(col: number, row: number): boolean;
   box(): Mask | null;
@@ -156,6 +186,7 @@ function createGrid(): CellGrid & {
   let roofs = new Int16Array(0);
   let chars: string[] = [];
   let colors: string[] = [];
+  let dirty: number[] = [];
 
   return {
     get cols() {
@@ -173,25 +204,27 @@ function createGrid(): CellGrid & {
       aspect = nextAspect || 1.7;
       chars = Array<string>(cols * rows).fill(" ");
       colors = Array<string>(cols * rows).fill("");
+      dirty = [];
     },
     clear() {
-      chars.fill(" ");
-      colors.fill("");
+      for (let i = 0; i < dirty.length; i++) {
+        const index = dirty[i] ?? 0;
+        chars[index] = " ";
+        colors[index] = "";
+      }
+      dirty.length = 0;
     },
     hold(next) {
       mask = next;
     },
-    cover(bits) {
+    cover(bits, ready) {
       solids = bits;
       if (roofs.length !== cols) roofs = new Int16Array(cols);
-      roofs.fill(-1);
-      if (!bits) return;
-      for (let r = 0; r < rows; r++) {
-        const start = r * cols;
-        for (let c = 0; c < cols; c++) {
-          if (bits[start + c] === 1 && roofs[c] === -1) roofs[c] = r;
-        }
+      if (ready && ready.length === cols) {
+        roofs.set(ready);
+        return;
       }
+      roofs.fill(-1);
     },
     roof(col) {
       const c = Math.round(col);
@@ -214,6 +247,7 @@ function createGrid(): CellGrid & {
       if (mask && c >= mask.c0 && c <= mask.c1 && r >= mask.r0 && r <= mask.r1) return;
       const index = r * cols + c;
       if (solids && solids[index] === 1) return;
+      if (chars[index] === " ") dirty.push(index);
       chars[index] = ch;
       colors[index] = color;
     },
@@ -260,7 +294,7 @@ function graphBox(cell: { w: number; h: number }): Mask | null {
     }
   }
   if (maxC < 0) return null;
-  const glyph = stageCell(stage);
+  const glyph = stageMetrics(stage);
   if (!glyph) return null;
   const pad = 2;
   const left = glyph.x + minC * glyph.w;
@@ -275,14 +309,20 @@ function graphBox(cell: { w: number; h: number }): Mask | null {
   };
 }
 
-function graphSolids(cell: { w: number; h: number }, cols: number, rows: number): Uint8Array | null {
+function writeSolids(
+  cell: { w: number; h: number },
+  cols: number,
+  rows: number,
+  solids: Uint8Array,
+  roofs: Int16Array,
+): void {
+  solids.fill(0);
+  roofs.fill(-1);
   const stage = document.querySelector("#stage");
-  if (!(stage instanceof HTMLElement) || cell.w <= 0 || cell.h <= 0 || cols <= 0 || rows <= 0) return null;
-  const glyph = stageCell(stage);
-  if (!glyph) return null;
+  if (!(stage instanceof HTMLElement) || cell.w <= 0 || cell.h <= 0) return;
+  const glyph = stageMetrics(stage);
+  if (!glyph) return;
   const lines = (stage.textContent ?? "").split("\n");
-  const solids = new Uint8Array(cols * rows);
-  let any = false;
   for (let r = 0; r < lines.length; r++) {
     const line = lines[r] ?? "";
     const top = glyph.y + r * glyph.h;
@@ -300,12 +340,26 @@ function graphSolids(cell: { w: number; h: number }, cols: number, rows: number)
         const row = br * cols;
         for (let bc = c0; bc <= c1; bc++) {
           solids[row + bc] = 1;
-          any = true;
+          if (roofs[bc] < 0) roofs[bc] = br;
         }
       }
     }
   }
-  return any ? solids : null;
+}
+
+let glyphCache: { x: number; y: number; w: number; h: number; at: number } | null = null;
+
+function forgetStage(): void {
+  glyphCache = null;
+}
+
+function stageMetrics(stage: HTMLElement): { x: number; y: number; w: number; h: number } | null {
+  const now = performance.now();
+  if (glyphCache && now - glyphCache.at < 200) return glyphCache;
+  const next = stageCell(stage);
+  if (!next) return glyphCache;
+  glyphCache = { ...next, at: now };
+  return glyphCache;
 }
 
 function stageCell(stage: HTMLElement): { x: number; y: number; w: number; h: number } | null {
@@ -392,6 +446,7 @@ function ensureStyle(): void {
       padding: 0;
       width: 100vw;
       height: 100vh;
+      contain: strict;
       min-width: 100%;
       min-height: 100%;
       box-sizing: border-box;

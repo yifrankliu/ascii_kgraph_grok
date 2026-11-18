@@ -157,13 +157,13 @@ function project(x: number, y: number, z: number, cols: number, rows: number, ya
   const z1 = y * Math.sin(pitch) + z * Math.cos(pitch);
   const x2 = x * Math.cos(yaw) + z1 * Math.sin(yaw);
   const z2 = -x * Math.sin(yaw) + z1 * Math.cos(yaw);
-  const camera = 2.85 - z2;
-  const persp = 2.2 / camera;
-  // One shared span so ultrawide windows don't squash the cone into a flat oval.
-  const span = Math.min(cols * 0.4, rows * 0.78);
+  const camera = 2.55 - z2;
+  const persp = 2.45 / camera;
+  // Fill more of the stage while keeping the cone from turning into an oval.
+  const span = Math.min(cols * 0.52, rows * 0.94);
   return {
     col: (cols - 1) / 2 + x2 * persp * span,
-    row: (rows - 1) / 2 - y1 * persp * span * 0.55 + 1,
+    row: (rows - 1) / 2 - y1 * persp * span * 0.62,
     depth: camera,
     near: clamp((z2 + 1) / 2, 0, 1),
   };

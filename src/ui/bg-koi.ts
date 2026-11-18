@@ -45,6 +45,14 @@ interface Fish {
   nodes: Float32Array;
   wake: Wake[];
   wakeAcc: number;
+  dash: number;
+}
+
+interface Motion {
+  c0: number;
+  c1: number;
+  r0: number;
+  r1: number;
 }
 
 export function createKoi(): { resize(cols: number, rows: number): void; draw(grid: CellGrid, dt: number): void } {
@@ -54,6 +62,7 @@ export function createKoi(): { resize(cols: number, rows: number): void; draw(gr
   let cols = 1;
   let rows = 1;
   let clock = 0;
+  let previous: Bounds | null = null;
 
   return {
     resize(nextCols, nextRows) {
@@ -69,9 +78,11 @@ export function createKoi(): { resize(cols: number, rows: number): void; draw(gr
       clock += dt;
       const aspect = grid.aspect || 1.8;
       const blocked = grid.box();
-      for (const swimmer of fish) stepFish(swimmer, dt, cols, rows, aspect, clock, blocked);
+      const motion = boxMotion(previous, blocked, dt);
+      previous = blocked ? { c0: blocked.c0, r0: blocked.r0, c1: blocked.c1, r1: blocked.r1 } : null;
+      for (const swimmer of fish) stepFish(swimmer, dt, cols, rows, aspect, clock, blocked, motion);
       nextRipple -= dt;
-      if (nextRipple <= 0 && ripples.length < 2) {
+      if (nextRipple <= 0 && ripples.length < 3) {
         const bearer = fish[Math.floor(Math.random() * fish.length)];
         ripples.push({
           x: bearer ? bearer.x : cols * 0.5,
@@ -79,7 +90,7 @@ export function createKoi(): { resize(cols: number, rows: number): void; draw(gr
           age: 0,
           life: 2.8,
         });
-        nextRipple = 3.2 + Math.random() * 2.4;
+        nextRipple = 1.8 + Math.random() * 1.6;
       }
       ripples = ripples.filter((ripple) => ripple.age < ripple.life);
       for (const ripple of ripples) paintRing(grid, ripple, dt);
@@ -129,6 +140,7 @@ function spawn(cols: number, rows: number, index: number): Fish {
     nodes: new Float32Array(NODES * 2),
     wake: [],
     wakeAcc: 0,
+    dash: 0,
   };
   laySpine(swimmer, 1.8);
   return swimmer;
@@ -142,8 +154,10 @@ function stepFish(
   aspect: number,
   clock: number,
   blocked: Bounds | null,
+  motion: Motion | null,
 ): void {
   const margin = 3;
+  swimmer.dash = Math.max(0, swimmer.dash - dt);
   let want = swimmer.course + Math.sin(clock * 0.35 + swimmer.seed) * 0.45;
   if (swimmer.x < margin) swimmer.course = 0;
   else if (swimmer.x > cols - margin) swimmer.course = Math.PI;
@@ -151,20 +165,55 @@ function stepFish(
   else if (swimmer.y > rows - margin) swimmer.course = -Math.PI / 2;
   const onEdge = swimmer.x < margin || swimmer.x > cols - margin || swimmer.y < margin || swimmer.y > rows - margin;
   if (onEdge) want = swimmer.course;
-  const around = blocked ? avoidHeading(swimmer, blocked, aspect) : null;
+  const sensed = blocked ? leading(blocked, motion) : null;
+  const around = sensed ? avoidHeading(swimmer, sensed, aspect) : null;
+  const rushed = blocked ? closing(swimmer, blocked, motion, aspect) : false;
   if (around !== null && !onEdge) want = around;
-  const turn = (around === null ? 0.9 : 2.8) * dt;
+  if (rushed || (blocked && contains(swimmer.x, swimmer.y, clearance(swimmer, blocked, aspect)))) {
+    swimmer.dash = Math.max(swimmer.dash, 0.55);
+  }
+  const turn = (swimmer.dash > 0 ? 4.4 : around === null ? 0.9 : 2.4) * dt;
   swimmer.heading += clamp(angleDiff(swimmer.heading, want), -turn, turn);
-  swimmer.x += Math.cos(swimmer.heading) * swimmer.speed * dt;
-  swimmer.y += (Math.sin(swimmer.heading) * swimmer.speed * dt) / aspect;
+  const pace = swimmer.speed * (swimmer.dash > 0 ? 1.9 : 1);
+  swimmer.x += Math.cos(swimmer.heading) * pace * dt;
+  swimmer.y += (Math.sin(swimmer.heading) * pace * dt) / aspect;
   swimmer.x = clamp(swimmer.x, 1, cols - 2);
   swimmer.y = clamp(swimmer.y, 1, rows - 2);
   swimmer.phase += dt * (2 + swimmer.speed / 5);
   follow(swimmer, aspect);
-  if (blocked) {
-    pushOut(swimmer, blocked, aspect, cols, rows);
-    pushOut(swimmer, blocked, aspect, cols, rows);
-  }
+  if (blocked) pushOut(swimmer, blocked, motion, aspect, cols, rows, dt);
+}
+
+function boxMotion(prev: Bounds | null, next: Bounds | null, dt: number): Motion | null {
+  if (!prev || !next || dt <= 0) return null;
+  return {
+    c0: (next.c0 - prev.c0) / dt,
+    c1: (next.c1 - prev.c1) / dt,
+    r0: (next.r0 - prev.r0) / dt,
+    r1: (next.r1 - prev.r1) / dt,
+  };
+}
+
+function leading(box: Bounds, motion: Motion | null): Bounds {
+  if (!motion) return box;
+  const lead = 0.18;
+  const cap = 6;
+  return {
+    c0: box.c0 + clamp(motion.c0 * lead, -cap, 0),
+    c1: box.c1 + clamp(motion.c1 * lead, 0, cap),
+    r0: box.r0 + clamp(motion.r0 * lead, -cap, 0),
+    r1: box.r1 + clamp(motion.r1 * lead, 0, cap),
+  };
+}
+
+function closing(swimmer: Fish, box: Bounds, motion: Motion | null, aspect: number): boolean {
+  if (!motion) return false;
+  const reach = Math.max(6, swimmer.span * 0.28);
+  if (motion.c0 < -18 && swimmer.x < box.c0 && box.c0 - swimmer.x < reach) return true;
+  if (motion.c1 > 18 && swimmer.x > box.c1 && swimmer.x - box.c1 < reach) return true;
+  if (motion.r0 < -18 && swimmer.y < box.r0 && (box.r0 - swimmer.y) * aspect < reach) return true;
+  if (motion.r1 > 18 && swimmer.y > box.r1 && (swimmer.y - box.r1) * aspect < reach) return true;
+  return contains(swimmer.x, swimmer.y, clearance(swimmer, box, aspect));
 }
 
 function avoidHeading(swimmer: Fish, box: Bounds, aspect: number): number | null {
@@ -185,7 +234,15 @@ function avoidHeading(swimmer: Fish, box: Bounds, aspect: number): number | null
   return Math.abs(angleDiff(swimmer.heading, left)) < Math.abs(angleDiff(swimmer.heading, right)) ? left : right;
 }
 
-function pushOut(swimmer: Fish, box: Bounds, aspect: number, cols: number, rows: number): void {
+function pushOut(
+  swimmer: Fish,
+  box: Bounds,
+  motion: Motion | null,
+  aspect: number,
+  cols: number,
+  rows: number,
+  dt: number,
+): void {
   const zone = clearance(swimmer, box, aspect);
   let pushX = 0;
   let pushY = 0;
@@ -198,19 +255,30 @@ function pushOut(swimmer: Fish, box: Bounds, aspect: number, cols: number, rows:
     pushY = exit.y;
   };
   consider(swimmer.x, swimmer.y);
-  for (let i = 0; i < NODES; i++) consider(swimmer.nodes[i * 2], swimmer.nodes[i * 2 + 1]);
+  for (let i = 0; i < NODES; i++) consider(swimmer.nodes[i * 2] ?? 0, swimmer.nodes[i * 2 + 1] ?? 0);
   if (depth <= 0) return;
+  const limit = Math.max(swimmer.speed * 2.2, depth * 1.5) * dt;
+  const span = Math.hypot(pushX, pushY * aspect) || 1;
+  if (span > limit) {
+    const scale = limit / span;
+    pushX *= scale;
+    pushY *= scale;
+  }
   swimmer.x += pushX;
   swimmer.y += pushY;
   for (let i = 0; i < NODES; i++) {
-    swimmer.nodes[i * 2] += pushX;
-    swimmer.nodes[i * 2 + 1] += pushY;
+    swimmer.nodes[i * 2] = (swimmer.nodes[i * 2] ?? 0) + pushX;
+    swimmer.nodes[i * 2 + 1] = (swimmer.nodes[i * 2 + 1] ?? 0) + pushY;
   }
-  const outward = Math.atan2(pushY * aspect, pushX);
+  const outward = Math.atan2(pushY * aspect, pushX || 0.0001);
   const left = outward + Math.PI / 2;
   const right = outward - Math.PI / 2;
-  swimmer.course = Math.abs(angleDiff(swimmer.heading, left)) < Math.abs(angleDiff(swimmer.heading, right)) ? left : right;
-  swimmer.heading += clamp(angleDiff(swimmer.heading, swimmer.course), -0.6, 0.6);
+  const rushed = depth > 3.5 || closing(swimmer, box, motion, aspect);
+  const along = Math.abs(angleDiff(swimmer.heading, left)) < Math.abs(angleDiff(swimmer.heading, right)) ? left : right;
+  swimmer.course = rushed ? outward : along;
+  const spin = (rushed ? 3.6 : 1.6) * dt;
+  swimmer.heading += clamp(angleDiff(swimmer.heading, swimmer.course), -spin, spin);
+  if (rushed) swimmer.dash = Math.max(swimmer.dash, 0.45);
 }
 
 function clearance(swimmer: Fish, box: Bounds, aspect: number): Bounds {
@@ -305,10 +373,13 @@ function paintFish(grid: CellGrid, swimmer: Fish, aspect: number, dt: number): v
   paintEyes(grid, swimmer, spine, arc, total, aspect);
   const tail = (NODES - 2) * 2;
   swimmer.wakeAcc += dt;
-  if (swimmer.wakeAcc >= 0.14) {
+  if (swimmer.wakeAcc >= 0.1) {
     swimmer.wakeAcc = 0;
-    swimmer.wake.push({ x: spine[tail] ?? swimmer.x, y: spine[tail + 1] ?? swimmer.y, age: 0 });
-    if (swimmer.wake.length > 16) swimmer.wake.shift();
+    const x = spine[tail] ?? swimmer.x;
+    const y = spine[tail + 1] ?? swimmer.y;
+    swimmer.wake.push({ x, y, age: 0 });
+    if ((swimmer.wake.length & 1) === 0) swimmer.wake.push({ x: x + 0.75, y: y + 0.3, age: 0.08 });
+    while (swimmer.wake.length > 22) swimmer.wake.shift();
   }
 }
 

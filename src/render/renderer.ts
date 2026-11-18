@@ -58,6 +58,7 @@ export function createRenderer(
   let cellH = 16;
   let hoverId: string | null = null;
   let menuId: string | null = null;
+  let menuLocked = false;
   let dragging = false;
   let moved = 0;
   let pointerX = 0;
@@ -82,25 +83,43 @@ export function createRenderer(
   const frame = (now: number) => {
     const dt = last ? Math.min(0.05, (now - (last || now)) / 1000) : 0.016;
     last = now;
-    if (autoSpin && !dragging && !inside) yaw += dt * 0.22;
+    if (autoSpin && !dragging && !menuLocked) yaw += dt * 0.22;
     const scene = renderScene(graph, cols, rows, yaw, pitch, menuId, expanded);
     hits = scene.hits;
     mount.innerHTML = scene.html;
+    if (menuLocked && menuId) {
+      const still = inside ? nearestHit(pointerX, pointerY, menuId) : null;
+      if (still) {
+        hoverId = menuId;
+        return;
+      }
+      menuLocked = false;
+      menuId = null;
+      hoverId = null;
+      autoSpin = true;
+    }
     if (inside) {
       const hit = nearestHit(pointerX, pointerY);
-      hoverId = hit?.id ?? null;
-      if (hit) menuId = hit.id;
-      else menuId = null;
+      if (hit && !hit.action) {
+        menuId = hit.id;
+        hoverId = hit.id;
+        menuLocked = true;
+        autoSpin = false;
+      } else {
+        hoverId = hit?.id ?? null;
+        menuId = null;
+      }
     } else {
       hoverId = null;
       menuId = null;
     }
   };
 
-  const nearestHit = (x: number, y: number): Hit | null => {
+  const nearestHit = (x: number, y: number, onlyId?: string | null): Hit | null => {
     let best: Hit | null = null;
     let bestD = Infinity;
     for (const hit of hits) {
+      if (onlyId && hit.id !== onlyId) continue;
       const distance = Math.hypot(hit.col - x, hit.row - y);
       const reach = hit.action
         ? Math.max(4, hit.radius + 1.5)
@@ -139,21 +158,28 @@ export function createRenderer(
   });
   mount.addEventListener("pointerup", (event) => {
     cellAt(event);
-    const hit = nearestHit(pointerX, pointerY);
+    const hit = nearestHit(pointerX, pointerY, menuLocked ? menuId : null);
     dragging = false;
     if (moved < 5 && hit) {
-      if (hit.action === "expand") opts?.onExpand?.(hit.id);
-      else if (hit.action === "preview") opts?.onPreview?.(hit.id);
+      if (hit.action === "expand" || hit.action === "preview") {
+        if (hit.action === "expand") opts?.onExpand?.(hit.id);
+        else opts?.onPreview?.(hit.id);
+        menuLocked = false;
+        menuId = null;
+        hoverId = null;
+      }
     }
     window.setTimeout(() => {
-      if (!dragging && !menuId) autoSpin = true;
+      if (!dragging && !menuId && !menuLocked) autoSpin = true;
     }, 1800);
   });
   mount.addEventListener("pointerleave", () => {
     inside = false;
+    dragging = false;
+    menuLocked = false;
     hoverId = null;
     menuId = null;
-    dragging = false;
+    autoSpin = true;
   });
 
   measure();

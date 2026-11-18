@@ -1,278 +1,522 @@
 {
+  "added": ["elena", "ravi", "noor"],
   "friends": [
     {
-      "handle": "maya",
+      "handle": "elena",
+      "email": "elena.voss@yale.edu",
+      "major": "art history",
+      "preset": "koi",
       "graph": {
-        "title": "cognition",
-        "rootId": "maya",
+        "title": "art history",
+        "rootId": "elena",
         "nodes": [
-          { "id": "maya", "label": "maya", "kind": "folder" },
-          { "id": "maya/cognition", "label": "cognition", "kind": "folder", "parent": "maya" },
-          { "id": "maya/methods", "label": "methods", "kind": "folder", "parent": "maya" },
+          { "id": "elena", "label": "elena", "kind": "folder" },
+          { "id": "elena/antique", "label": "antique", "kind": "folder", "parent": "elena" },
+          { "id": "elena/renaissance", "label": "renaissance", "kind": "folder", "parent": "elena" },
+          { "id": "elena/baroque", "label": "baroque", "kind": "folder", "parent": "elena" },
+          { "id": "elena/modern", "label": "modern", "kind": "folder", "parent": "elena" },
+          { "id": "elena/current", "label": "current", "kind": "folder", "parent": "elena" },
           {
-            "id": "maya/cognition/attention.md",
-            "label": "attention.md",
+            "id": "elena/antique/canon.md",
+            "label": "canon.md",
             "kind": "file",
-            "parent": "maya/cognition",
-            "summary": "Selective attention decides which lecture details ever reach working memory.",
-            "concepts": ["selective attention", "working memory", "cognitive load"],
+            "parent": "elena/antique",
+            "summary": "The antique canon is a set of bodies and temples later centuries keep quoting.",
+            "concepts": ["canon", "proportion", "temple"],
             "status": "ready"
           },
           {
-            "id": "maya/cognition/memory.md",
-            "label": "memory.md",
+            "id": "elena/renaissance/perspective.md",
+            "label": "perspective.md",
             "kind": "file",
-            "parent": "maya/cognition",
-            "summary": "Encoding and retrieval are the two ends of getting a note back out on a problem set.",
-            "concepts": ["encoding", "retrieval", "memory consolidation"],
+            "parent": "elena/renaissance",
+            "summary": "Linear perspective is a representation that makes a flat wall read as a room.",
+            "concepts": ["perspective", "representation", "picture plane"],
             "status": "ready"
           },
           {
-            "id": "maya/cognition/sleep.md",
-            "label": "sleep.md",
+            "id": "elena/renaissance/patronage.md",
+            "label": "patronage.md",
             "kind": "file",
-            "parent": "maya/cognition",
-            "summary": "Slow-wave sleep is when the day's encoding gets consolidated.",
-            "concepts": ["slow-wave sleep", "memory consolidation", "circadian rhythm"],
+            "parent": "elena/renaissance",
+            "summary": "Patronage decides which images leave the workshop and become public knowledge.",
+            "concepts": ["patronage", "public knowledge", "workshop"],
             "status": "ready"
           },
           {
-            "id": "maya/methods/retrieval.md",
-            "label": "retrieval.md",
+            "id": "elena/baroque/light.md",
+            "label": "light.md",
             "kind": "file",
-            "parent": "maya/methods",
-            "summary": "Practice tests work because retrieval itself strengthens the trace.",
-            "concepts": ["retrieval", "encoding", "spaced practice"],
+            "parent": "elena/baroque",
+            "summary": "Baroque light is an observation: the eye is steered to one lit incident.",
+            "concepts": ["chiaroscuro", "observation", "spectacle"],
+            "status": "ready"
+          },
+          {
+            "id": "elena/modern/flatness.md",
+            "label": "flatness.md",
+            "kind": "file",
+            "parent": "elena/modern",
+            "summary": "Modern flatness treats the canvas as a surface, not a window onto a model.",
+            "concepts": ["flatness", "abstraction", "picture plane"],
+            "status": "ready"
+          },
+          {
+            "id": "elena/modern/manifesto.md",
+            "label": "manifesto.md",
+            "kind": "file",
+            "parent": "elena/modern",
+            "summary": "A manifesto is a group declaring which past it will keep and which it will refuse.",
+            "concepts": ["manifesto", "avant-garde", "canon"],
+            "status": "ready"
+          },
+          {
+            "id": "elena/current/museum.md",
+            "label": "museum.md",
+            "kind": "file",
+            "parent": "elena/current",
+            "summary": "A campus museum is a library of objects, arranged so a walk becomes an argument.",
+            "concepts": ["Yale", "libraries", "exhibition"],
             "status": "ready"
           }
         ],
         "edges": [
-          { "source": "maya", "target": "maya/cognition", "kind": "contains" },
-          { "source": "maya", "target": "maya/methods", "kind": "contains" },
-          { "source": "maya/cognition", "target": "maya/cognition/attention.md", "kind": "contains" },
-          { "source": "maya/cognition", "target": "maya/cognition/memory.md", "kind": "contains" },
-          { "source": "maya/cognition", "target": "maya/cognition/sleep.md", "kind": "contains" },
-          { "source": "maya/methods", "target": "maya/methods/retrieval.md", "kind": "contains" },
-          {
-            "source": "maya/cognition/attention.md",
-            "target": "maya/cognition/memory.md",
-            "kind": "relates",
-            "note": "Attention gates what gets encoded"
-          },
-          {
-            "source": "maya/cognition/memory.md",
-            "target": "maya/cognition/sleep.md",
-            "kind": "relates",
-            "note": "Sleep consolidates what was encoded"
-          },
-          {
-            "source": "maya/methods/retrieval.md",
-            "target": "maya/cognition/memory.md",
-            "kind": "relates",
-            "note": "Retrieval practice is a way to rehearse recall"
-          }
+          { "source": "elena", "target": "elena/antique", "kind": "contains" },
+          { "source": "elena", "target": "elena/renaissance", "kind": "contains" },
+          { "source": "elena", "target": "elena/baroque", "kind": "contains" },
+          { "source": "elena", "target": "elena/modern", "kind": "contains" },
+          { "source": "elena", "target": "elena/current", "kind": "contains" },
+          { "source": "elena/antique", "target": "elena/antique/canon.md", "kind": "contains" },
+          { "source": "elena/renaissance", "target": "elena/renaissance/perspective.md", "kind": "contains" },
+          { "source": "elena/renaissance", "target": "elena/renaissance/patronage.md", "kind": "contains" },
+          { "source": "elena/baroque", "target": "elena/baroque/light.md", "kind": "contains" },
+          { "source": "elena/modern", "target": "elena/modern/flatness.md", "kind": "contains" },
+          { "source": "elena/modern", "target": "elena/modern/manifesto.md", "kind": "contains" },
+          { "source": "elena/current", "target": "elena/current/museum.md", "kind": "contains" },
+          { "source": "elena/antique/canon.md", "target": "elena/renaissance/perspective.md", "kind": "relates", "note": "Perspective rebuilds the antique body in a measured room" },
+          { "source": "elena/renaissance/perspective.md", "target": "elena/baroque/light.md", "kind": "relates", "note": "Drama takes over once the room is already built" },
+          { "source": "elena/baroque/light.md", "target": "elena/modern/flatness.md", "kind": "relates", "note": "Flatness refuses the lit depth baroque insisted on" },
+          { "source": "elena/modern/manifesto.md", "target": "elena/antique/canon.md", "kind": "relates", "note": "The manifesto names the canon in order to break it" },
+          { "source": "elena/renaissance/patronage.md", "target": "elena/current/museum.md", "kind": "relates", "note": "The museum inherits the patron's power to make an image public" },
+          { "source": "elena/modern/flatness.md", "target": "elena/current/museum.md", "kind": "relates", "note": "Installation keeps the surface, then lets you walk around it" }
         ]
       }
     },
     {
-      "handle": "jordan",
+      "handle": "ravi",
+      "email": "ravi.mehta@yale.edu",
+      "major": "cs",
+      "preset": "matrix",
       "graph": {
-        "title": "linear",
-        "rootId": "jordan",
+        "title": "cs",
+        "rootId": "ravi",
         "nodes": [
-          { "id": "jordan", "label": "jordan", "kind": "folder" },
-          { "id": "jordan/linear", "label": "linear", "kind": "folder", "parent": "jordan" },
+          { "id": "ravi", "label": "ravi", "kind": "folder" },
+          { "id": "ravi/systems", "label": "systems", "kind": "folder", "parent": "ravi" },
+          { "id": "ravi/systems/hardware", "label": "hardware", "kind": "folder", "parent": "ravi/systems" },
+          { "id": "ravi/systems/kernel", "label": "kernel", "kind": "folder", "parent": "ravi/systems" },
+          { "id": "ravi/languages", "label": "languages", "kind": "folder", "parent": "ravi" },
+          { "id": "ravi/languages/types", "label": "types", "kind": "folder", "parent": "ravi/languages" },
+          { "id": "ravi/languages/compile", "label": "compile", "kind": "folder", "parent": "ravi/languages" },
+          { "id": "ravi/theory", "label": "theory", "kind": "folder", "parent": "ravi" },
           {
-            "id": "jordan/linear/spaces.md",
-            "label": "spaces.md",
+            "id": "ravi/systems/hardware/gates.md",
+            "label": "gates.md",
             "kind": "file",
-            "parent": "jordan/linear",
-            "summary": "A basis is a smallest set of vectors that still spans the space.",
-            "concepts": ["vector space", "basis", "dimension"],
+            "parent": "ravi/systems/hardware",
+            "summary": "Gates are the smallest switches a machine uses to hold a bit of state.",
+            "concepts": ["logic gate", "bit", "circuit"],
             "status": "ready"
           },
           {
-            "id": "jordan/linear/eigen.md",
-            "label": "eigen.md",
+            "id": "ravi/systems/hardware/ram.md",
+            "label": "ram.md",
             "kind": "file",
-            "parent": "jordan/linear",
-            "summary": "Eigenvectors are the directions a matrix only stretches or flips.",
-            "concepts": ["eigenvalue", "eigenvector", "characteristic polynomial"],
+            "parent": "ravi/systems/hardware",
+            "summary": "Memory is an address space: a numbered row of cells the processor can name.",
+            "concepts": ["address space", "hierarchy", "locality"],
             "status": "ready"
           },
           {
-            "id": "jordan/linear/least-squares.md",
-            "label": "least-squares.md",
+            "id": "ravi/systems/kernel/procs.md",
+            "label": "procs.md",
             "kind": "file",
-            "parent": "jordan/linear",
-            "summary": "Least squares drops a perpendicular from the data onto the column space.",
-            "concepts": ["least squares", "projection", "normal equations"],
+            "parent": "ravi/systems/kernel",
+            "summary": "A process is the kernel's model of a program that owns memory and a clock.",
+            "concepts": ["process", "model", "scheduling"],
             "status": "ready"
           },
           {
-            "id": "jordan/linear/markov.md",
-            "label": "markov.md",
+            "id": "ravi/systems/kernel/files.md",
+            "label": "files.md",
             "kind": "file",
-            "parent": "jordan/linear",
-            "summary": "A steady state is an eigenvector of the transition matrix with eigenvalue one.",
-            "concepts": ["markov chain", "steady state", "eigenvalue"],
+            "parent": "ravi/systems/kernel",
+            "summary": "A file system turns a disk into names a process can open.",
+            "concepts": ["file system", "inode", "naming"],
+            "status": "ready"
+          },
+          {
+            "id": "ravi/languages/types/infer.md",
+            "label": "infer.md",
+            "kind": "file",
+            "parent": "ravi/languages/types",
+            "summary": "Type inference builds a representation of the program without being told every type.",
+            "concepts": ["type inference", "abstraction", "representation"],
+            "status": "ready"
+          },
+          {
+            "id": "ravi/languages/compile/parse.md",
+            "label": "parse.md",
+            "kind": "file",
+            "parent": "ravi/languages/compile",
+            "summary": "Parsing turns a string of tokens into the tree the rest of the compiler walks.",
+            "concepts": ["parser", "syntax tree", "grammar"],
+            "status": "ready"
+          },
+          {
+            "id": "ravi/theory/automata.md",
+            "label": "automata.md",
+            "kind": "file",
+            "parent": "ravi/theory",
+            "summary": "An automaton is a small model of a machine that only remembers a state.",
+            "concepts": ["automaton", "model", "state"],
+            "status": "ready"
+          },
+          {
+            "id": "ravi/theory/complex.md",
+            "label": "complex.md",
+            "kind": "file",
+            "parent": "ravi/theory",
+            "summary": "Complexity sorts problems by how fast the cost grows as the input grows.",
+            "concepts": ["complexity", "big-o", "reduction"],
+            "status": "ready"
+          },
+          {
+            "id": "ravi/theory/space.md",
+            "label": "space.md",
+            "kind": "file",
+            "parent": "ravi/theory",
+            "summary": "Graphics and learning both sit on vector spaces, bases, and projection.",
+            "concepts": ["vector space", "dimension", "projection"],
             "status": "ready"
           }
         ],
         "edges": [
-          { "source": "jordan", "target": "jordan/linear", "kind": "contains" },
-          { "source": "jordan/linear", "target": "jordan/linear/spaces.md", "kind": "contains" },
-          { "source": "jordan/linear", "target": "jordan/linear/eigen.md", "kind": "contains" },
-          { "source": "jordan/linear", "target": "jordan/linear/least-squares.md", "kind": "contains" },
-          { "source": "jordan/linear", "target": "jordan/linear/markov.md", "kind": "contains" },
-          {
-            "source": "jordan/linear/eigen.md",
-            "target": "jordan/linear/spaces.md",
-            "kind": "relates",
-            "note": "Eigenvectors live in a vector space"
-          },
-          {
-            "source": "jordan/linear/spaces.md",
-            "target": "jordan/linear/least-squares.md",
-            "kind": "relates",
-            "note": "Least squares projects onto a subspace"
-          },
-          {
-            "source": "jordan/linear/markov.md",
-            "target": "jordan/linear/eigen.md",
-            "kind": "relates",
-            "note": "Steady state is an eigenvector"
-          }
+          { "source": "ravi", "target": "ravi/systems", "kind": "contains" },
+          { "source": "ravi", "target": "ravi/languages", "kind": "contains" },
+          { "source": "ravi", "target": "ravi/theory", "kind": "contains" },
+          { "source": "ravi/systems", "target": "ravi/systems/hardware", "kind": "contains" },
+          { "source": "ravi/systems", "target": "ravi/systems/kernel", "kind": "contains" },
+          { "source": "ravi/languages", "target": "ravi/languages/types", "kind": "contains" },
+          { "source": "ravi/languages", "target": "ravi/languages/compile", "kind": "contains" },
+          { "source": "ravi/systems/hardware", "target": "ravi/systems/hardware/gates.md", "kind": "contains" },
+          { "source": "ravi/systems/hardware", "target": "ravi/systems/hardware/ram.md", "kind": "contains" },
+          { "source": "ravi/systems/kernel", "target": "ravi/systems/kernel/procs.md", "kind": "contains" },
+          { "source": "ravi/systems/kernel", "target": "ravi/systems/kernel/files.md", "kind": "contains" },
+          { "source": "ravi/languages/types", "target": "ravi/languages/types/infer.md", "kind": "contains" },
+          { "source": "ravi/languages/compile", "target": "ravi/languages/compile/parse.md", "kind": "contains" },
+          { "source": "ravi/theory", "target": "ravi/theory/automata.md", "kind": "contains" },
+          { "source": "ravi/theory", "target": "ravi/theory/complex.md", "kind": "contains" },
+          { "source": "ravi/theory", "target": "ravi/theory/space.md", "kind": "contains" },
+          { "source": "ravi/systems/hardware/gates.md", "target": "ravi/systems/kernel/procs.md", "kind": "relates", "note": "A process is gates plus a clock, named by the kernel" },
+          { "source": "ravi/systems/hardware/ram.md", "target": "ravi/systems/kernel/files.md", "kind": "relates", "note": "Files are names laid over the same addressable storage" },
+          { "source": "ravi/languages/compile/parse.md", "target": "ravi/languages/types/infer.md", "kind": "relates", "note": "Inference walks the tree the parser just built" },
+          { "source": "ravi/theory/automata.md", "target": "ravi/theory/complex.md", "kind": "relates", "note": "Complexity measures how many steps the machine needs" },
+          { "source": "ravi/systems/kernel/procs.md", "target": "ravi/theory/automata.md", "kind": "relates", "note": "A process is an automaton with a much larger state" }
         ]
       }
     },
     {
-      "handle": "priya",
+      "handle": "noor",
+      "email": "noor.hassan@yale.edu",
+      "major": "physics & philosophy",
+      "preset": "dark",
       "graph": {
-        "title": "history",
-        "rootId": "priya",
+        "title": "physics & philosophy",
+        "rootId": "noor",
         "nodes": [
-          { "id": "priya", "label": "priya", "kind": "folder" },
-          { "id": "priya/history", "label": "history", "kind": "folder", "parent": "priya" },
-          { "id": "priya/history/early", "label": "early", "kind": "folder", "parent": "priya/history" },
+          { "id": "noor", "label": "noor", "kind": "folder" },
+          { "id": "noor/physics", "label": "physics", "kind": "folder", "parent": "noor" },
+          { "id": "noor/philosophy", "label": "philosophy", "kind": "folder", "parent": "noor" },
           {
-            "id": "priya/history/early/networks.md",
-            "label": "networks.md",
+            "id": "noor/physics/mechanics.md",
+            "label": "mechanics.md",
             "kind": "file",
-            "parent": "priya/history/early",
-            "summary": "Letters moved arguments between cities faster than people did.",
-            "concepts": ["correspondence networks", "republic of letters", "knowledge circulation"],
+            "parent": "noor/physics",
+            "summary": "Mechanics is a model of motion: mass, force, and the path between them.",
+            "concepts": ["mechanics", "model", "force"],
             "status": "ready"
           },
           {
-            "id": "priya/history/early/print.md",
-            "label": "print.md",
+            "id": "noor/physics/fields.md",
+            "label": "fields.md",
             "kind": "file",
-            "parent": "priya/history/early",
-            "summary": "Print let a correction reach every copy of a text, not just one manuscript.",
-            "concepts": ["printing press", "textual transmission", "public knowledge"],
+            "parent": "noor/physics",
+            "summary": "A field gives every point in space a value, so a force can exist where no body sits.",
+            "concepts": ["field", "force", "space"],
             "status": "ready"
           },
           {
-            "id": "priya/history/yale.md",
-            "label": "yale.md",
+            "id": "noor/physics/quanta.md",
+            "label": "quanta.md",
             "kind": "file",
-            "parent": "priya/history",
-            "summary": "A campus is a correspondence network that happens to share a library.",
-            "concepts": ["Yale", "libraries", "course of study"],
+            "parent": "noor/physics",
+            "summary": "A measurement changes what can be said next; observation is part of the experiment.",
+            "concepts": ["quantum", "observation", "measurement"],
             "status": "ready"
           },
           {
-            "id": "priya/history/seminar.md",
-            "label": "seminar.md",
+            "id": "noor/physics/spacetime.md",
+            "label": "spacetime.md",
             "kind": "file",
-            "parent": "priya/history",
-            "summary": "Seminars keep knowledge in circulation by making people answer out loud.",
-            "concepts": ["seminar", "knowledge circulation", "oral argument"],
+            "parent": "noor/physics",
+            "summary": "Spacetime treats time as another dimension a path can run along.",
+            "concepts": ["spacetime", "dimension", "worldline"],
+            "status": "ready"
+          },
+          {
+            "id": "noor/philosophy/causation.md",
+            "label": "causation.md",
+            "kind": "file",
+            "parent": "noor/philosophy",
+            "summary": "Causation asks what it means for one event to make the next one happen.",
+            "concepts": ["causation", "counterfactual", "law"],
+            "status": "ready"
+          },
+          {
+            "id": "noor/philosophy/mind.md",
+            "label": "mind.md",
+            "kind": "file",
+            "parent": "noor/philosophy",
+            "summary": "The mind note asks whether a measurement needs an observer who is someone.",
+            "concepts": ["mind", "observer", "experience"],
+            "status": "ready"
+          },
+          {
+            "id": "noor/philosophy/knowledge.md",
+            "label": "knowledge.md",
+            "kind": "file",
+            "parent": "noor/philosophy",
+            "summary": "Knowledge is a representation you are entitled to count as true.",
+            "concepts": ["knowledge", "representation", "justification"],
+            "status": "ready"
+          },
+          {
+            "id": "noor/philosophy/ethics.md",
+            "label": "ethics.md",
+            "kind": "file",
+            "parent": "noor/philosophy",
+            "summary": "Ethics asks what a person owes once they can predict what a force will do.",
+            "concepts": ["ethics", "responsibility", "prediction"],
             "status": "ready"
           }
         ],
         "edges": [
-          { "source": "priya", "target": "priya/history", "kind": "contains" },
-          { "source": "priya/history", "target": "priya/history/early", "kind": "contains" },
-          { "source": "priya/history", "target": "priya/history/yale.md", "kind": "contains" },
-          { "source": "priya/history", "target": "priya/history/seminar.md", "kind": "contains" },
-          { "source": "priya/history/early", "target": "priya/history/early/networks.md", "kind": "contains" },
-          { "source": "priya/history/early", "target": "priya/history/early/print.md", "kind": "contains" },
-          {
-            "source": "priya/history/early/print.md",
-            "target": "priya/history/yale.md",
-            "kind": "relates",
-            "note": "Print scaled the texts a campus holds"
-          },
-          {
-            "source": "priya/history/early/networks.md",
-            "target": "priya/history/seminar.md",
-            "kind": "relates",
-            "note": "Both move ideas by reply"
-          },
-          {
-            "source": "priya/history/seminar.md",
-            "target": "priya/history/yale.md",
-            "kind": "relates",
-            "note": "The seminar is how a course of study talks back"
-          }
+          { "source": "noor", "target": "noor/physics", "kind": "contains" },
+          { "source": "noor", "target": "noor/philosophy", "kind": "contains" },
+          { "source": "noor/physics", "target": "noor/physics/mechanics.md", "kind": "contains" },
+          { "source": "noor/physics", "target": "noor/physics/fields.md", "kind": "contains" },
+          { "source": "noor/physics", "target": "noor/physics/quanta.md", "kind": "contains" },
+          { "source": "noor/physics", "target": "noor/physics/spacetime.md", "kind": "contains" },
+          { "source": "noor/philosophy", "target": "noor/philosophy/causation.md", "kind": "contains" },
+          { "source": "noor/philosophy", "target": "noor/philosophy/mind.md", "kind": "contains" },
+          { "source": "noor/philosophy", "target": "noor/philosophy/knowledge.md", "kind": "contains" },
+          { "source": "noor/philosophy", "target": "noor/philosophy/ethics.md", "kind": "contains" },
+          { "source": "noor/physics/mechanics.md", "target": "noor/philosophy/causation.md", "kind": "relates", "note": "Force is the physicist's name for one kind of cause" },
+          { "source": "noor/physics/quanta.md", "target": "noor/philosophy/mind.md", "kind": "relates", "note": "Measurement keeps asking who the observer is" },
+          { "source": "noor/physics/spacetime.md", "target": "noor/philosophy/knowledge.md", "kind": "relates", "note": "A fact is true somewhere on a worldline" },
+          { "source": "noor/physics/fields.md", "target": "noor/philosophy/ethics.md", "kind": "relates", "note": "Predicting a force is already a decision about what to do with it" },
+          { "source": "noor/physics/quanta.md", "target": "noor/philosophy/knowledge.md", "kind": "relates", "note": "What you are entitled to say changes when you measure" }
         ]
       }
     },
     {
-      "handle": "sam",
+      "handle": "julia",
+      "email": "julia.park@yale.edu",
+      "major": "ecology",
+      "preset": "koi",
       "graph": {
-        "title": "methods",
-        "rootId": "sam",
+        "title": "ecology",
+        "rootId": "julia",
         "nodes": [
-          { "id": "sam", "label": "sam", "kind": "folder" },
-          { "id": "sam/study", "label": "study", "kind": "folder", "parent": "sam" },
+          { "id": "julia", "label": "julia", "kind": "folder" },
+          { "id": "julia/field", "label": "field", "kind": "folder", "parent": "julia" },
           {
-            "id": "sam/study/retrieval.md",
-            "label": "retrieval.md",
+            "id": "julia/field/plots.md",
+            "label": "plots.md",
             "kind": "file",
-            "parent": "sam/study",
-            "summary": "Closing the notes and recalling a proof is a retrieval rep, not a review.",
-            "concepts": ["retrieval", "memory consolidation", "encoding"],
+            "parent": "julia/field",
+            "summary": "A field plot is a small square of woods you return to and count again.",
+            "concepts": ["field plot", "census", "transect"],
             "status": "ready"
           },
           {
-            "id": "sam/study/load.md",
-            "label": "load.md",
+            "id": "julia/field/species.md",
+            "label": "species.md",
             "kind": "file",
-            "parent": "sam/study",
-            "summary": "Cognitive load is why a dense board loses the middle of the derivation.",
-            "concepts": ["cognitive load", "selective attention", "working memory"],
-            "status": "ready"
-          },
-          {
-            "id": "sam/study/projection.md",
-            "label": "projection.md",
-            "kind": "file",
-            "parent": "sam/study",
-            "summary": "Least squares is a picture of keeping the part of the data that fits the model.",
-            "concepts": ["projection", "least squares", "normal equations"],
+            "parent": "julia/field",
+            "summary": "Species notes track who shares a plot and who never shows up together.",
+            "concepts": ["species", "co-occurrence", "niche"],
             "status": "ready"
           }
         ],
         "edges": [
-          { "source": "sam", "target": "sam/study", "kind": "contains" },
-          { "source": "sam/study", "target": "sam/study/retrieval.md", "kind": "contains" },
-          { "source": "sam/study", "target": "sam/study/load.md", "kind": "contains" },
-          { "source": "sam/study", "target": "sam/study/projection.md", "kind": "contains" },
+          { "source": "julia", "target": "julia/field", "kind": "contains" },
+          { "source": "julia/field", "target": "julia/field/plots.md", "kind": "contains" },
+          { "source": "julia/field", "target": "julia/field/species.md", "kind": "contains" },
+          { "source": "julia/field/plots.md", "target": "julia/field/species.md", "kind": "relates", "note": "The plot is where the species list is counted" }
+        ]
+      }
+    },
+    {
+      "handle": "marcus",
+      "email": "marcus.bell@yale.edu",
+      "major": "economics",
+      "preset": "matrix",
+      "graph": {
+        "title": "economics",
+        "rootId": "marcus",
+        "nodes": [
+          { "id": "marcus", "label": "marcus", "kind": "folder" },
+          { "id": "marcus/markets", "label": "markets", "kind": "folder", "parent": "marcus" },
           {
-            "source": "sam/study/load.md",
-            "target": "sam/study/retrieval.md",
-            "kind": "relates",
-            "note": "Attention has to hold before retrieval can"
+            "id": "marcus/markets/price.md",
+            "label": "price.md",
+            "kind": "file",
+            "parent": "marcus/markets",
+            "summary": "A price is the number that clears a market when buyers and sellers both stop.",
+            "concepts": ["price", "market clearing", "supply"],
+            "status": "ready"
           },
           {
-            "source": "sam/study/projection.md",
-            "target": "sam/study/retrieval.md",
-            "kind": "relates",
-            "note": "Both keep a smaller, useful part of what you took in"
+            "id": "marcus/markets/choice.md",
+            "label": "choice.md",
+            "kind": "file",
+            "parent": "marcus/markets",
+            "summary": "Choice notes treat a person as picking the bundle they can afford and prefer.",
+            "concepts": ["choice", "budget", "preference"],
+            "status": "ready"
           }
+        ],
+        "edges": [
+          { "source": "marcus", "target": "marcus/markets", "kind": "contains" },
+          { "source": "marcus/markets", "target": "marcus/markets/price.md", "kind": "contains" },
+          { "source": "marcus/markets", "target": "marcus/markets/choice.md", "kind": "contains" },
+          { "source": "marcus/markets/choice.md", "target": "marcus/markets/price.md", "kind": "relates", "note": "Prices are what a choice can afford" }
+        ]
+      }
+    },
+    {
+      "handle": "aisha",
+      "email": "aisha.rahman@yale.edu",
+      "major": "architecture",
+      "preset": "dark",
+      "graph": {
+        "title": "architecture",
+        "rootId": "aisha",
+        "nodes": [
+          { "id": "aisha", "label": "aisha", "kind": "folder" },
+          { "id": "aisha/studio", "label": "studio", "kind": "folder", "parent": "aisha" },
+          {
+            "id": "aisha/studio/plan.md",
+            "label": "plan.md",
+            "kind": "file",
+            "parent": "aisha/studio",
+            "summary": "A plan is a representation of a building cut horizontally, so rooms become a drawing.",
+            "concepts": ["plan", "representation", "room"],
+            "status": "ready"
+          },
+          {
+            "id": "aisha/studio/section.md",
+            "label": "section.md",
+            "kind": "file",
+            "parent": "aisha/studio",
+            "summary": "A section cuts the building the other way and shows how floors stack.",
+            "concepts": ["section", "floor", "structure"],
+            "status": "ready"
+          }
+        ],
+        "edges": [
+          { "source": "aisha", "target": "aisha/studio", "kind": "contains" },
+          { "source": "aisha/studio", "target": "aisha/studio/plan.md", "kind": "contains" },
+          { "source": "aisha/studio", "target": "aisha/studio/section.md", "kind": "contains" },
+          { "source": "aisha/studio/plan.md", "target": "aisha/studio/section.md", "kind": "relates", "note": "Plan and section are the same building, cut on different axes" }
+        ]
+      }
+    },
+    {
+      "handle": "leo",
+      "email": "leo.grant@yale.edu",
+      "major": "music",
+      "preset": "koi",
+      "graph": {
+        "title": "music",
+        "rootId": "leo",
+        "nodes": [
+          { "id": "leo", "label": "leo", "kind": "folder" },
+          { "id": "leo/score", "label": "score", "kind": "folder", "parent": "leo" },
+          {
+            "id": "leo/score/form.md",
+            "label": "form.md",
+            "kind": "file",
+            "parent": "leo/score",
+            "summary": "Form is how a piece returns to a tune you have already heard.",
+            "concepts": ["form", "reprise", "phrase"],
+            "status": "ready"
+          },
+          {
+            "id": "leo/score/listen.md",
+            "label": "listen.md",
+            "kind": "file",
+            "parent": "leo/score",
+            "summary": "Listening notes mark the moment the ear notices a voice enter.",
+            "concepts": ["listening", "entrance", "timbre"],
+            "status": "ready"
+          }
+        ],
+        "edges": [
+          { "source": "leo", "target": "leo/score", "kind": "contains" },
+          { "source": "leo/score", "target": "leo/score/form.md", "kind": "contains" },
+          { "source": "leo/score", "target": "leo/score/listen.md", "kind": "contains" },
+          { "source": "leo/score/listen.md", "target": "leo/score/form.md", "kind": "relates", "note": "You hear the form when a tune comes back" }
+        ]
+      }
+    },
+    {
+      "handle": "sofia",
+      "email": "sofia.nguyen@yale.edu",
+      "major": "biology",
+      "preset": "matrix",
+      "graph": {
+        "title": "biology",
+        "rootId": "sofia",
+        "nodes": [
+          { "id": "sofia", "label": "sofia", "kind": "folder" },
+          { "id": "sofia/lab", "label": "lab", "kind": "folder", "parent": "sofia" },
+          {
+            "id": "sofia/lab/cell.md",
+            "label": "cell.md",
+            "kind": "file",
+            "parent": "sofia/lab",
+            "summary": "A cell is a membrane around a set of reactions that keep themselves going.",
+            "concepts": ["cell", "membrane", "metabolism"],
+            "status": "ready"
+          },
+          {
+            "id": "sofia/lab/sequence.md",
+            "label": "sequence.md",
+            "kind": "file",
+            "parent": "sofia/lab",
+            "summary": "A sequence is a string of bases that a cell can copy and read.",
+            "concepts": ["sequence", "base pair", "transcription"],
+            "status": "ready"
+          }
+        ],
+        "edges": [
+          { "source": "sofia", "target": "sofia/lab", "kind": "contains" },
+          { "source": "sofia/lab", "target": "sofia/lab/cell.md", "kind": "contains" },
+          { "source": "sofia/lab", "target": "sofia/lab/sequence.md", "kind": "contains" },
+          { "source": "sofia/lab/sequence.md", "target": "sofia/lab/cell.md", "kind": "relates", "note": "The cell copies the sequence in order to stay itself" }
         ]
       }
     }
