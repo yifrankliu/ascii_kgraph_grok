@@ -1,7 +1,7 @@
 import type { Graph, GraphNode } from "./types";
 
 /** Recursive cone tree: root at the top, each folder fans into its children. */
-export function layout(graph: Graph, keepPositions = false): void {
+export function layout(graph: Graph, keepPositions = false, _expanded?: Set<string>): void {
   if (!keepPositions || graph.nodes.every((node) => node.x === undefined)) {
     placeTree(graph);
   }

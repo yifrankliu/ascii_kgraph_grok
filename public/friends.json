@@ -1,0 +1,280 @@
+{
+  "friends": [
+    {
+      "handle": "maya",
+      "graph": {
+        "title": "cognition",
+        "rootId": "maya",
+        "nodes": [
+          { "id": "maya", "label": "maya", "kind": "folder" },
+          { "id": "maya/cognition", "label": "cognition", "kind": "folder", "parent": "maya" },
+          { "id": "maya/methods", "label": "methods", "kind": "folder", "parent": "maya" },
+          {
+            "id": "maya/cognition/attention.md",
+            "label": "attention.md",
+            "kind": "file",
+            "parent": "maya/cognition",
+            "summary": "Selective attention decides which lecture details ever reach working memory.",
+            "concepts": ["selective attention", "working memory", "cognitive load"],
+            "status": "ready"
+          },
+          {
+            "id": "maya/cognition/memory.md",
+            "label": "memory.md",
+            "kind": "file",
+            "parent": "maya/cognition",
+            "summary": "Encoding and retrieval are the two ends of getting a note back out on a problem set.",
+            "concepts": ["encoding", "retrieval", "memory consolidation"],
+            "status": "ready"
+          },
+          {
+            "id": "maya/cognition/sleep.md",
+            "label": "sleep.md",
+            "kind": "file",
+            "parent": "maya/cognition",
+            "summary": "Slow-wave sleep is when the day's encoding gets consolidated.",
+            "concepts": ["slow-wave sleep", "memory consolidation", "circadian rhythm"],
+            "status": "ready"
+          },
+          {
+            "id": "maya/methods/retrieval.md",
+            "label": "retrieval.md",
+            "kind": "file",
+            "parent": "maya/methods",
+            "summary": "Practice tests work because retrieval itself strengthens the trace.",
+            "concepts": ["retrieval", "encoding", "spaced practice"],
+            "status": "ready"
+          }
+        ],
+        "edges": [
+          { "source": "maya", "target": "maya/cognition", "kind": "contains" },
+          { "source": "maya", "target": "maya/methods", "kind": "contains" },
+          { "source": "maya/cognition", "target": "maya/cognition/attention.md", "kind": "contains" },
+          { "source": "maya/cognition", "target": "maya/cognition/memory.md", "kind": "contains" },
+          { "source": "maya/cognition", "target": "maya/cognition/sleep.md", "kind": "contains" },
+          { "source": "maya/methods", "target": "maya/methods/retrieval.md", "kind": "contains" },
+          {
+            "source": "maya/cognition/attention.md",
+            "target": "maya/cognition/memory.md",
+            "kind": "relates",
+            "note": "Attention gates what gets encoded"
+          },
+          {
+            "source": "maya/cognition/memory.md",
+            "target": "maya/cognition/sleep.md",
+            "kind": "relates",
+            "note": "Sleep consolidates what was encoded"
+          },
+          {
+            "source": "maya/methods/retrieval.md",
+            "target": "maya/cognition/memory.md",
+            "kind": "relates",
+            "note": "Retrieval practice is a way to rehearse recall"
+          }
+        ]
+      }
+    },
+    {
+      "handle": "jordan",
+      "graph": {
+        "title": "linear",
+        "rootId": "jordan",
+        "nodes": [
+          { "id": "jordan", "label": "jordan", "kind": "folder" },
+          { "id": "jordan/linear", "label": "linear", "kind": "folder", "parent": "jordan" },
+          {
+            "id": "jordan/linear/spaces.md",
+            "label": "spaces.md",
+            "kind": "file",
+            "parent": "jordan/linear",
+            "summary": "A basis is a smallest set of vectors that still spans the space.",
+            "concepts": ["vector space", "basis", "dimension"],
+            "status": "ready"
+          },
+          {
+            "id": "jordan/linear/eigen.md",
+            "label": "eigen.md",
+            "kind": "file",
+            "parent": "jordan/linear",
+            "summary": "Eigenvectors are the directions a matrix only stretches or flips.",
+            "concepts": ["eigenvalue", "eigenvector", "characteristic polynomial"],
+            "status": "ready"
+          },
+          {
+            "id": "jordan/linear/least-squares.md",
+            "label": "least-squares.md",
+            "kind": "file",
+            "parent": "jordan/linear",
+            "summary": "Least squares drops a perpendicular from the data onto the column space.",
+            "concepts": ["least squares", "projection", "normal equations"],
+            "status": "ready"
+          },
+          {
+            "id": "jordan/linear/markov.md",
+            "label": "markov.md",
+            "kind": "file",
+            "parent": "jordan/linear",
+            "summary": "A steady state is an eigenvector of the transition matrix with eigenvalue one.",
+            "concepts": ["markov chain", "steady state", "eigenvalue"],
+            "status": "ready"
+          }
+        ],
+        "edges": [
+          { "source": "jordan", "target": "jordan/linear", "kind": "contains" },
+          { "source": "jordan/linear", "target": "jordan/linear/spaces.md", "kind": "contains" },
+          { "source": "jordan/linear", "target": "jordan/linear/eigen.md", "kind": "contains" },
+          { "source": "jordan/linear", "target": "jordan/linear/least-squares.md", "kind": "contains" },
+          { "source": "jordan/linear", "target": "jordan/linear/markov.md", "kind": "contains" },
+          {
+            "source": "jordan/linear/eigen.md",
+            "target": "jordan/linear/spaces.md",
+            "kind": "relates",
+            "note": "Eigenvectors live in a vector space"
+          },
+          {
+            "source": "jordan/linear/spaces.md",
+            "target": "jordan/linear/least-squares.md",
+            "kind": "relates",
+            "note": "Least squares projects onto a subspace"
+          },
+          {
+            "source": "jordan/linear/markov.md",
+            "target": "jordan/linear/eigen.md",
+            "kind": "relates",
+            "note": "Steady state is an eigenvector"
+          }
+        ]
+      }
+    },
+    {
+      "handle": "priya",
+      "graph": {
+        "title": "history",
+        "rootId": "priya",
+        "nodes": [
+          { "id": "priya", "label": "priya", "kind": "folder" },
+          { "id": "priya/history", "label": "history", "kind": "folder", "parent": "priya" },
+          { "id": "priya/history/early", "label": "early", "kind": "folder", "parent": "priya/history" },
+          {
+            "id": "priya/history/early/networks.md",
+            "label": "networks.md",
+            "kind": "file",
+            "parent": "priya/history/early",
+            "summary": "Letters moved arguments between cities faster than people did.",
+            "concepts": ["correspondence networks", "republic of letters", "knowledge circulation"],
+            "status": "ready"
+          },
+          {
+            "id": "priya/history/early/print.md",
+            "label": "print.md",
+            "kind": "file",
+            "parent": "priya/history/early",
+            "summary": "Print let a correction reach every copy of a text, not just one manuscript.",
+            "concepts": ["printing press", "textual transmission", "public knowledge"],
+            "status": "ready"
+          },
+          {
+            "id": "priya/history/yale.md",
+            "label": "yale.md",
+            "kind": "file",
+            "parent": "priya/history",
+            "summary": "A campus is a correspondence network that happens to share a library.",
+            "concepts": ["Yale", "libraries", "course of study"],
+            "status": "ready"
+          },
+          {
+            "id": "priya/history/seminar.md",
+            "label": "seminar.md",
+            "kind": "file",
+            "parent": "priya/history",
+            "summary": "Seminars keep knowledge in circulation by making people answer out loud.",
+            "concepts": ["seminar", "knowledge circulation", "oral argument"],
+            "status": "ready"
+          }
+        ],
+        "edges": [
+          { "source": "priya", "target": "priya/history", "kind": "contains" },
+          { "source": "priya/history", "target": "priya/history/early", "kind": "contains" },
+          { "source": "priya/history", "target": "priya/history/yale.md", "kind": "contains" },
+          { "source": "priya/history", "target": "priya/history/seminar.md", "kind": "contains" },
+          { "source": "priya/history/early", "target": "priya/history/early/networks.md", "kind": "contains" },
+          { "source": "priya/history/early", "target": "priya/history/early/print.md", "kind": "contains" },
+          {
+            "source": "priya/history/early/print.md",
+            "target": "priya/history/yale.md",
+            "kind": "relates",
+            "note": "Print scaled the texts a campus holds"
+          },
+          {
+            "source": "priya/history/early/networks.md",
+            "target": "priya/history/seminar.md",
+            "kind": "relates",
+            "note": "Both move ideas by reply"
+          },
+          {
+            "source": "priya/history/seminar.md",
+            "target": "priya/history/yale.md",
+            "kind": "relates",
+            "note": "The seminar is how a course of study talks back"
+          }
+        ]
+      }
+    },
+    {
+      "handle": "sam",
+      "graph": {
+        "title": "methods",
+        "rootId": "sam",
+        "nodes": [
+          { "id": "sam", "label": "sam", "kind": "folder" },
+          { "id": "sam/study", "label": "study", "kind": "folder", "parent": "sam" },
+          {
+            "id": "sam/study/retrieval.md",
+            "label": "retrieval.md",
+            "kind": "file",
+            "parent": "sam/study",
+            "summary": "Closing the notes and recalling a proof is a retrieval rep, not a review.",
+            "concepts": ["retrieval", "memory consolidation", "encoding"],
+            "status": "ready"
+          },
+          {
+            "id": "sam/study/load.md",
+            "label": "load.md",
+            "kind": "file",
+            "parent": "sam/study",
+            "summary": "Cognitive load is why a dense board loses the middle of the derivation.",
+            "concepts": ["cognitive load", "selective attention", "working memory"],
+            "status": "ready"
+          },
+          {
+            "id": "sam/study/projection.md",
+            "label": "projection.md",
+            "kind": "file",
+            "parent": "sam/study",
+            "summary": "Least squares is a picture of keeping the part of the data that fits the model.",
+            "concepts": ["projection", "least squares", "normal equations"],
+            "status": "ready"
+          }
+        ],
+        "edges": [
+          { "source": "sam", "target": "sam/study", "kind": "contains" },
+          { "source": "sam/study", "target": "sam/study/retrieval.md", "kind": "contains" },
+          { "source": "sam/study", "target": "sam/study/load.md", "kind": "contains" },
+          { "source": "sam/study", "target": "sam/study/projection.md", "kind": "contains" },
+          {
+            "source": "sam/study/load.md",
+            "target": "sam/study/retrieval.md",
+            "kind": "relates",
+            "note": "Attention has to hold before retrieval can"
+          },
+          {
+            "source": "sam/study/projection.md",
+            "target": "sam/study/retrieval.md",
+            "kind": "relates",
+            "note": "Both keep a smaller, useful part of what you took in"
+          }
+        ]
+      }
+    }
+  ]
+}

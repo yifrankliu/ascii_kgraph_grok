@@ -44,8 +44,7 @@ export function mountShell(): {
       statusEl.textContent = message;
     },
     show(node, graph) {
-      panel.hidden = false;
-      panel.replaceChildren(panelView(node, graph));
+      openNode(node, graph);
     },
     hide() {
       panel.hidden = true;
@@ -54,6 +53,16 @@ export function mountShell(): {
       handler = next;
     },
   };
+
+  function openNode(node: GraphNode, graph: Graph) {
+    panel.hidden = false;
+    panel.replaceChildren(
+      panelView(node, graph, (id) => {
+        const next = graph.nodes.find((item) => item.id === id);
+        if (next) openNode(next, graph);
+      }),
+    );
+  }
 
   async function deliverFiles(files: File[]) {
     statusEl.textContent = "Reading folder…";
@@ -80,48 +89,136 @@ export function mountShell(): {
   }
 }
 
-function panelView(node: GraphNode, graph: Graph): DocumentFragment {
+function panelView(node: GraphNode, graph: Graph, onOpen: (id: string) => void): DocumentFragment {
   const fragment = document.createDocumentFragment();
-  fragment.append(required("#close"));
-  fragment.append(
-    heading(node.label),
-    line(node.kind === "folder" ? (node.id === graph.rootId ? "Root folder" : "Folder") : node.status ?? "file"),
-  );
-  fragment.append(paragraph(copyFor(node, graph)));
+  fragment.append(plate(node, graph));
+  fragment.append(post(node.kind === "folder" ? "index" : "summary", copyFor(node, graph)));
+
   if (node.kind === "folder") {
-    const kids = graph.nodes.filter((item) => item.parent === node.id);
-    if (kids.length) {
-      fragment.append(heading("Contains"));
-      const list = document.createElement("ul");
-      for (const kid of kids) {
-        const item = document.createElement("li");
-        item.textContent = `${kid.kind === "folder" ? "[#]" : "(o)"} ${kid.label}`;
-        list.append(item);
-      }
-      fragment.append(list);
-    }
+    const kids = containsReplies(node.id, graph, onOpen);
+    if (kids.length) fragment.append(thread("contains", kids));
   }
   if (node.concepts?.length) {
-    const list = document.createElement("ul");
-    for (const concept of node.concepts) {
-      const item = document.createElement("li");
-      item.textContent = concept;
-      list.append(item);
-    }
-    fragment.append(list);
+    fragment.append(thread("concepts", node.concepts.map((concept) => textReply(concept))));
   }
+
   const related = graph.edges.filter(
     (edge) => edge.kind === "relates" && (edge.source === node.id || edge.target === node.id),
   );
   if (related.length) {
-    fragment.append(heading("Connected"));
-    for (const edge of related) {
-      const otherId = edge.source === node.id ? edge.target : edge.source;
-      const other = graph.nodes.find((item) => item.id === otherId);
-      fragment.append(paragraph(`${other?.label ?? otherId}${edge.note ? ` — ${edge.note}` : ""}`));
-    }
+    fragment.append(
+      thread(
+        "connected",
+        related.map((edge) => {
+          const otherId = edge.source === node.id ? edge.target : edge.source;
+          const other = graph.nodes.find((item) => item.id === otherId);
+          const head = other
+            ? nodeButton(other, onOpen)
+            : textLabel(otherId);
+          return replyBlock(head, edge.note);
+        }),
+      ),
+    );
   }
   return fragment;
+}
+
+function plate(node: GraphNode, graph: Graph): HTMLElement {
+  const row = document.createElement("div");
+  row.className = "plate";
+  const main = document.createElement("div");
+  main.className = "plate-main";
+  main.append(line(kindLine(node, graph)), heading(node.label));
+  if (node.id !== node.label) main.append(pathLine(node.id));
+  row.append(main, required("#close"));
+  return row;
+}
+
+function containsReplies(parentId: string, graph: Graph, onOpen: (id: string) => void): HTMLElement[] {
+  return graph.nodes
+    .filter((item) => item.parent === parentId)
+    .map((item) => {
+      const nested = containsReplies(item.id, graph, onOpen);
+      return replyBlock(nodeButton(item, onOpen), item.summary, nested.length ? replies(nested) : undefined);
+    });
+}
+
+function thread(tag: string, items: HTMLElement[]): HTMLElement {
+  const section = document.createElement("section");
+  section.className = "thread";
+  section.append(tagLine(tag), replies(items));
+  return section;
+}
+
+function post(tag: string, text: string): HTMLElement {
+  const section = document.createElement("section");
+  section.className = "post";
+  const body = document.createElement("p");
+  body.className = "body";
+  body.textContent = text;
+  section.append(tagLine(tag), body);
+  return section;
+}
+
+function replies(items: HTMLElement[]): HTMLElement {
+  const list = document.createElement("div");
+  list.className = "replies";
+  for (const item of items) list.append(item);
+  return list;
+}
+
+function replyBlock(head: HTMLElement, note?: string, nested?: HTMLElement): HTMLElement {
+  const reply = document.createElement("div");
+  reply.className = "reply";
+  reply.append(head);
+  if (note) {
+    const body = document.createElement("p");
+    body.className = "reply-note";
+    body.textContent = note;
+    reply.append(body);
+  }
+  if (nested) reply.append(nested);
+  return reply;
+}
+
+function nodeButton(node: GraphNode, onOpen: (id: string) => void): HTMLButtonElement {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "reply-title";
+  button.textContent = `${node.kind === "folder" ? "[#]" : "(o)"} ${node.label}`;
+  button.addEventListener("click", () => onOpen(node.id));
+  return button;
+}
+
+function textReply(text: string): HTMLElement {
+  return replyBlock(textLabel(text));
+}
+
+function textLabel(text: string): HTMLElement {
+  const label = document.createElement("p");
+  label.className = "reply-label";
+  label.textContent = text;
+  return label;
+}
+
+function kindLine(node: GraphNode, graph: Graph): string {
+  if (node.kind === "folder") return node.id === graph.rootId ? "root" : "folder";
+  if (node.status) return `file · ${node.status}`;
+  return "file";
+}
+
+function pathLine(text: string): HTMLElement {
+  const el = document.createElement("p");
+  el.className = "path";
+  el.textContent = text;
+  return el;
+}
+
+function tagLine(text: string): HTMLElement {
+  const el = document.createElement("p");
+  el.className = "tag";
+  el.textContent = text;
+  return el;
 }
 
 function copyFor(node: GraphNode, graph: Graph): string {
@@ -133,7 +230,7 @@ function copyFor(node: GraphNode, graph: Graph): string {
     if (node.id === graph.rootId) {
       return `Root of this knowledge graph · ${folders} subfolder${folders === 1 ? "" : "s"}, ${files} file${files === 1 ? "" : "s"} here.`;
     }
-    return `Folder · ${folders} subfolder${folders === 1 ? "" : "s"}, ${files} file${files === 1 ? "" : "s"}.`;
+    return `Folder · ${folders} subfolder${folders === 1 ? "" : "s"}, ${files} file${files === 1 ? "" : "s"}. Click the node again to expand or collapse files.`;
   }
   if (node.status === "pending") return "Grok is still reading this file.";
   if (node.status === "failed") return "Grok could not read this file. The node stays in the folder graph.";
@@ -149,12 +246,6 @@ function heading(text: string): HTMLElement {
 function line(text: string): HTMLElement {
   const el = document.createElement("p");
   el.className = "kind";
-  el.textContent = text;
-  return el;
-}
-
-function paragraph(text: string): HTMLElement {
-  const el = document.createElement("p");
   el.textContent = text;
   return el;
 }
